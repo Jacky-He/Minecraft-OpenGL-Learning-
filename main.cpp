@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include "GameControl.hpp"
 #include "Util.hpp"
+#include "Camera.hpp"
+#include "SceneRenderer.hpp"
 
 
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -40,13 +42,21 @@ int main ()
     glViewport(0, 0, screenWidth, screenHeight);
     std::cout << glGetString(GL_VERSION) << std::endl;
     
-    GameControl::StaticStart();
+    GameControl::sharedInstance().Start();
+    Camera* camera = new Camera();
+    SceneRenderer* renderer = new SceneRenderer();
+    renderer -> SetCamera(*camera);
     
     while (!glfwWindowShouldClose(window))
     {
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
-        GameControl::StaticUpdate();
+//        GameControl::sharedInstance().Update();
+        camera -> Update();
+        renderer -> Render();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    
+    delete camera;
+    delete renderer;
 }

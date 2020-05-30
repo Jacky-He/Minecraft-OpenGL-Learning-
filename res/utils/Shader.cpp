@@ -36,6 +36,7 @@ ShaderProgramSource Shader::ParseShader (const std::string& filepath)
         }
         else ss[(int)type] << line << "\n";
     }
+//    std::cout << ss[0].str() << " " << ss[1].str() << std::endl;
     return {ss[0].str(), ss[1].str()};
 }
 

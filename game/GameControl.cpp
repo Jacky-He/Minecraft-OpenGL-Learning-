@@ -1,22 +1,29 @@
 #include "GameControl.hpp"
 
+GameControl* GameControl::instance = new GameControl();
+
 GameControl::GameControl()
 {
-    objs.push_back(*this);
 }
 
 GameControl::~GameControl()
 {
-    objs.clear();
 }
 
-void GameControl::StaticStart()
+void GameControl::Start()
 {
-    for (auto& each : objs) each.Start();
+//    for (auto& each : *objs) each.Start();
 }
 
-void GameControl::StaticUpdate()
+void GameControl::Update()
 {
-    for (auto& each : objs) each.Update();
+//    for (auto& each : *objs) each.Update();
 }
+
+GameControl GameControl::sharedInstance()
+{
+    return *instance;
+}
+
+
 

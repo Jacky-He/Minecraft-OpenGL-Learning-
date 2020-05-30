@@ -1,15 +1,23 @@
 #pragma once
 #include "Util.hpp"
 
+
+class Controller
+{
+public:
+    virtual void Start() = 0;
+    virtual void Update() = 0;
+};
+
+
 class GameControl
 {
 private:
+    static GameControl* instance;
+public:
     GameControl ();
     ~GameControl();
-    static std::vector <GameControl> objs;
-public:
-    static void StaticStart();
-    static void StaticUpdate();
-    virtual void Start(){};
-    virtual void Update(){};
+    static GameControl sharedInstance();
+    void Start();
+    void Update();
 };
