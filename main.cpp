@@ -5,6 +5,7 @@
 #include "SceneRenderer.hpp"
 #include "Input.hpp"
 #include "Camera.hpp"
+#include "Constants.hpp"
 
 const GLint WIDTH = 800, HEIGHT = 600;
 
@@ -51,9 +52,13 @@ int main ()
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-  
+    
+    double timeFromStart = glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
+        double timeCurr = glfwGetTime(); //in seconds
+        Constants::deltaTime = timeCurr - timeFromStart;
+        timeFromStart = timeCurr;
         GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
         
 //        GameControl::sharedInstance().Update();

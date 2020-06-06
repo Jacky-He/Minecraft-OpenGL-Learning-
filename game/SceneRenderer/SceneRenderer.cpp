@@ -81,7 +81,7 @@ void SceneRenderer::Render()
     
     Shader shader ("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/cube.shader");
     shader.SetUniform4f("u_Color", 1, 1, 1, 1);
-    glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, -2.0f));
+    glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
     shader.SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
     
     Renderer renderer;
