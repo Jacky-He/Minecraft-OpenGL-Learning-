@@ -7,9 +7,9 @@
 #include "Renderer.hpp"
 
 
-SceneRenderer::SceneRenderer():camera()
+SceneRenderer::SceneRenderer()
 {
-    
+    camera = nullptr;
 }
 
 SceneRenderer::~SceneRenderer()
@@ -26,10 +26,10 @@ void SceneRenderer::Render()
         0.5f, 0.5f, -0.5f,
         -0.5f, 0.5f, -0.5f,
         
-        -0.5f, -0.5f, -0.5f, //back
-        0.5f, -0.5f, -0.5f,
-        0.5f, 0.5f, -0.5f,
-        -0.5f, 0.5f, -0.5f,
+        -0.5f, -0.5f, 0.5f, //back
+        0.5f, -0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        -0.5f, 0.5f, 0.5f,
         
         0.5f, -0.5f, -0.5f, //right
         0.5f, -0.5f, 0.5f,
@@ -71,7 +71,7 @@ void SceneRenderer::Render()
         20, 21, 22,
         22, 23, 20
     };
-    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     VertexArray va;
     VertexBuffer vb (positions, sizeof(positions));
     VertexBufferLayout layout;
@@ -82,14 +82,14 @@ void SceneRenderer::Render()
     Shader shader ("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/cube.shader");
     shader.SetUniform4f("u_Color", 1, 1, 1, 1);
     glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, -2.0f));
-    shader.SetUniformMat4f("u_MVP", camera.GetPVMatrix()*model);
+    shader.SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
     
     Renderer renderer;
     renderer.Draw(va, ib, shader);
 }
 
 
-void SceneRenderer::SetCamera(const Camera& camera)
+void SceneRenderer::SetCamera(Camera* camera)
 {
     this -> camera = camera;
 }

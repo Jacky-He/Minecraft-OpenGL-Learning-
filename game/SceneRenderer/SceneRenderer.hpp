@@ -4,10 +4,10 @@
 class SceneRenderer
 {
 private:
-    Camera camera;
+    Camera* camera;
 public:
     SceneRenderer();
     ~SceneRenderer();
     void Render();
-    void SetCamera(const Camera& camera);
+    void SetCamera(Camera* camera);
 };

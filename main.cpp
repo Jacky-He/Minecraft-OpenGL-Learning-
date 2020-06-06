@@ -1,14 +1,13 @@
 #define GLEW_STATIC
 #include <iostream>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include "GameControl.hpp"
 #include "Util.hpp"
-#include "Camera.hpp"
 #include "SceneRenderer.hpp"
-
+#include "Input.hpp"
+#include "Camera.hpp"
 
 const GLint WIDTH = 800, HEIGHT = 600;
+
 
 int main ()
 {
@@ -21,6 +20,8 @@ int main ()
     
     GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Learn Open GL", nullptr, nullptr);
     
+    Input::Init(window);
+
     int screenWidth, screenHeight;
     glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
     
@@ -44,12 +45,17 @@ int main ()
     
     GameControl::sharedInstance().Start();
     Camera* camera = new Camera();
+    camera -> Start();
     SceneRenderer* renderer = new SceneRenderer();
-    renderer -> SetCamera(*camera);
+    renderer -> SetCamera(camera);
     
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+  
     while (!glfwWindowShouldClose(window))
     {
-        GLCall(glClear(GL_COLOR_BUFFER_BIT));
+        GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
+        
 //        GameControl::sharedInstance().Update();
         camera -> Update();
         renderer -> Render();
