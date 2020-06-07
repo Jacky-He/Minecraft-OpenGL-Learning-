@@ -22,7 +22,8 @@ Camera::Camera():m_ActiveDirections()
 
 Camera::~Camera()
 {
-    
+    m_KeyboardInputListener.Remove();
+    m_ActiveDirections.clear();
 }
 
 void Camera::Update()

@@ -2,23 +2,31 @@
 #version 330 core
     
 layout (location = 0) in vec4 position;
+layout (location = 1) in vec2 texCoords;
+layout (location = 2) in float texID;
 
+out float textureID;
+out vec2 textureCoords;
 uniform mat4 u_MVP;
     
 void main()
 {
     gl_Position = u_MVP * position;
+    textureCoords = texCoords;
+    textureID = texID;
 }
 
 #shader fragment
 #version 330 core
 
 out vec4 color;
-
-uniform vec4 u_Color;
+in vec2 textureCoords;
+in float textureID;
     
+uniform sampler2D u_Textures [6];
+
 void main()
 {
-    color = u_Color;
+    int index = int(textureID);
+    color = texture (u_Textures[index], textureCoords);
 }
-

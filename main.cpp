@@ -6,6 +6,7 @@
 #include "Input.hpp"
 #include "Camera.hpp"
 #include "Constants.hpp"
+#include "Textures.hpp"
 
 const GLint WIDTH = 800, HEIGHT = 600;
 
@@ -43,6 +44,8 @@ int main ()
     glfwSwapInterval(1);
     glViewport(0, 0, screenWidth, screenHeight);
     std::cout << glGetString(GL_VERSION) << std::endl;
+    //load textures
+    Textures::LoadTextures();
     
     GameControl::sharedInstance().Start();
     Camera* camera = new Camera();
@@ -60,6 +63,7 @@ int main ()
         Constants::deltaTime = timeCurr - timeFromStart;
         timeFromStart = timeCurr;
         GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
+        GLCall(glClearColor(124/255.05,204/255.0,239/255.0, 1.0));
         
 //        GameControl::sharedInstance().Update();
         camera -> Update();
