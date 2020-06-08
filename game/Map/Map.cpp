@@ -1,6 +1,7 @@
 #include "Map.hpp"
 
 Map* Map::CurrMap = nullptr;
+std::mutex Map::s_Mutex;
 
 Map::Map():m_NoiseFunction(), m_Lookup()
 {

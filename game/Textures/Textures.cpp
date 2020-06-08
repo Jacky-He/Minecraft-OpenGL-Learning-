@@ -2,6 +2,7 @@
 
 
 std::map <std::string, Texture*> Textures::m_Textures = std::map <std::string, Texture*>();
+std::mutex Textures::s_Mutex;
 std::string Textures::m_BlockTypeToString [] =
 {
     "grass"

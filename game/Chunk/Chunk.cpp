@@ -2,6 +2,7 @@
 #include "Constants.hpp"
 #include "Map.hpp"
 #include "Renderer.hpp"
+#include "Timer.hpp"
 
 std::unique_ptr<VertexArray> Chunk::s_VAO = nullptr;
 std::unique_ptr<VertexBuffer> Chunk::s_VBO = nullptr;
@@ -32,9 +33,9 @@ void Chunk::SetUp()
     s_VAO -> AddBuffer(*s_VBO, layout);
 
     GLCall(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &s_MaxTextureUnits));
-    int samplers [s_MaxTextureUnits];
-    for (int i = 0; i < s_MaxTextureUnits; i++) samplers[i] = i;
-    s_Shader -> SetUniformiv("u_Textures", samplers, s_MaxTextureUnits);
+    int samplers [32];
+    for (int i = 0; i < 32; i++) samplers[i] = i;
+    s_Shader -> SetUniformiv("u_Textures", samplers, 32);
     
     //setup indices array
     unsigned int* indices = new unsigned int [36*16*16*256];
@@ -55,14 +56,7 @@ void Chunk::SetUp()
 
 Chunk::Chunk(std::pair <int, int> position):m_BackwardLeftPosition(position)
 {
-//    std::clock_t start;
-//    double duration;
-//    start = std::clock();
-//    
     m_Futures.push_back(std::async(std::launch::async, &Chunk::Initialize, this));
-    
-//    duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
-//    cout << duration << endl;
 }
 
 Chunk::~Chunk()
@@ -77,7 +71,9 @@ std::pair <int, int> Chunk::GetPosition()
 
 void Chunk::Initialize()
 {
-    std::lock_guard<std::mutex> lock (m_Mutex);
+    std::lock_guard<std::mutex> lock1 (Map::s_Mutex);
+    std::lock_guard<std::mutex> lock2 (Textures::s_Mutex);
+    
     for (int i = 0; i < 16; i++)
         for (int j = 0; j < 16; j++)
             for (int k = 0; k < 256; k++)

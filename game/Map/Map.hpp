@@ -12,6 +12,8 @@ public:
     static Map* CurrMap;
     static void SetCurrMap (Map* map);
     static Map* GetCurrMap ();
+    static std::mutex s_Mutex;
+
     
     Map();
     ~Map();

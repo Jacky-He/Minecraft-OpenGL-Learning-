@@ -23,7 +23,7 @@ out vec4 color;
 in vec2 textureCoords;
 in float textureID;
     
-uniform sampler2D u_Textures [6];
+uniform sampler2D u_Textures [16];
 
 void main()
 {

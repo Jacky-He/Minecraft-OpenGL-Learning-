@@ -28,7 +28,6 @@ private:
     std::map<Texture*, int> m_NeededTextures;
     std::vector<Texture*> m_TextureVector;
     std::vector<std::future<void>> m_Futures;
-    std::mutex m_Mutex;
     
     void Initialize();
     std::vector <int> GetExposedDirectionsOfCube (glm::vec3 position);
