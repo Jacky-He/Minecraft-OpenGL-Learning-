@@ -2,6 +2,10 @@
 
 
 std::map <std::string, Texture*> Textures::m_Textures = std::map <std::string, Texture*>();
+std::string Textures::m_BlockTypeToString [] =
+{
+    "grass"
+};
 
 void Textures::LoadTextures()
 {
@@ -13,4 +17,16 @@ void Textures::LoadTextures()
 Texture* Textures::GetTexture(const std::string &name)
 {
     return m_Textures[name];
+}
+
+Texture* Textures::GetTexture(BlockType type, Direction dir)
+{
+    if (static_cast <int> (type) > 0) return nullptr;
+    
+    std::string str1 = m_BlockTypeToString [static_cast<int>(type)];
+    std::string str2 = "";
+    if(dir == Direction::UP) str2 = "top";
+    else if (dir == Direction::DOWN) str2 = "bottom";
+    else str2 = "side";
+    return m_Textures[str1 + "_" + str2];
 }

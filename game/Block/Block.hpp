@@ -3,11 +3,6 @@
 #include "Renderer.hpp"
 #include "Camera.hpp"
 
-enum BlockType
-{
-    GRASS = 0
-};
-
 struct Vertex
 {
     float x; float y; float z; int textureID;

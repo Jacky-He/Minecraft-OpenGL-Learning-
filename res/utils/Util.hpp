@@ -8,8 +8,16 @@
 #include <stdlib.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <memory>
 #include <list>
+#include <stdio.h>
+#include <future>
+#include <ctime>
+#include <mutex>
+#include <numeric>
+#include <time.h>
+#include <random>
 #include <unordered_map>
 #include <map>
 #include <set>
@@ -24,3 +32,13 @@ using std::endl;
 void GLClearError();
 
 bool GLLogCall(const char* function, const char* file, int line);
+
+enum class BlockType
+{
+    GRASS = 0, EMPTY = -1
+};
+
+enum class Direction
+{
+    FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, UP = 4, DOWN = 5
+};

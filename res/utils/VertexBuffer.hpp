@@ -10,4 +10,6 @@ public:
     
     void Bind() const;
     void Unbind() const;
+    void SetData(const void* data, unsigned int size) const;
+
 };

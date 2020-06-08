@@ -8,8 +8,8 @@ Camera::Camera():m_ActiveDirections()
     std::function<void(GLFWwindow*, int, int, int, int)> f = std::bind(&Camera::KeyboardInput, this, _1, _2, _3, _4, _5);
     m_KeyboardInputListener = Input::addKeyboardInputListener(this, f);
     
-    m_Speed = 5.0f; // m/s
-    m_Position = glm::vec3(0.0f, 0.0f, -2.0f);
+    m_Speed = 5.0f; // m/
+    m_Position = glm::vec3(0.0f, 180.0f, 0.0f);
     m_Direction = glm::vec3(0.0f, 0.0f, 1.0f);
     m_Updir = glm::vec3(0.0f, 1.0f, 0.0f);
     m_RotationX = glm::radians(45.0f);

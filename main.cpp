@@ -7,6 +7,8 @@
 #include "Camera.hpp"
 #include "Constants.hpp"
 #include "Textures.hpp"
+#include "Map.hpp"
+#include "Chunk.hpp"
 
 const GLint WIDTH = 800, HEIGHT = 600;
 
@@ -44,13 +46,25 @@ int main ()
     glfwSwapInterval(1);
     glViewport(0, 0, screenWidth, screenHeight);
     std::cout << glGetString(GL_VERSION) << std::endl;
+    
+    
     //load textures
     Textures::LoadTextures();
+    //load textures finished
+    
+    //Generate map
+    Map* worldMap = new Map();
+    Map::SetCurrMap(worldMap);
+    //Generate map finished
+    
+    //set up Chunk
+    Chunk::SetUp();
+    //set up Chunk finished
     
     GameControl::sharedInstance().Start();
     Camera* camera = new Camera();
     camera -> Start();
-    SceneRenderer* renderer = new SceneRenderer();
+    SceneRenderer* renderer = new SceneRenderer(112);
     renderer -> SetCamera(camera);
     
     glEnable(GL_DEPTH_TEST);
@@ -62,8 +76,8 @@ int main ()
         double timeCurr = glfwGetTime(); //in seconds
         Constants::deltaTime = timeCurr - timeFromStart;
         timeFromStart = timeCurr;
-        GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
         GLCall(glClearColor(124/255.05,204/255.0,239/255.0, 1.0));
+        GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
         
 //        GameControl::sharedInstance().Update();
         camera -> Update();

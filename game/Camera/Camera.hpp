@@ -3,11 +3,6 @@
 #include "GameControl.hpp"
 #include "Listener.hpp"
 
-enum Direction
-{
-    FORWARD = 1, BACKWARD = 2, LEFT = 3, RIGHT = 4, UP = 5, DOWN = 6
-};
-
 class Camera: public Controller
 {
 private:
