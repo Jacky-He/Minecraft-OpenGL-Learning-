@@ -4,11 +4,11 @@
 #include "Util.hpp"
 #include "SceneRenderer.hpp"
 #include "Input.hpp"
-#include "Camera.hpp"
 #include "Constants.hpp"
 #include "Textures.hpp"
 #include "Map.hpp"
 #include "Chunk.hpp"
+#include "Player.hpp"
 
 const GLint WIDTH = 800, HEIGHT = 600;
 
@@ -62,10 +62,10 @@ int main ()
     //set up Chunk finished
     
     GameControl::sharedInstance().Start();
-    Camera* camera = new Camera();
-    camera -> Start();
+    Player* player = new Player("Jacky", glm::vec3(0, 180, 0));
+    player -> Start();
     SceneRenderer* renderer = new SceneRenderer(112);
-    renderer -> SetCamera(camera);
+    renderer -> SetCamera(player -> m_FirstPersonCamera);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -80,12 +80,12 @@ int main ()
         GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
         
 //        GameControl::sharedInstance().Update();
-        camera -> Update();
+        player -> Update();
         renderer -> Render();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     
-    delete camera;
+    delete player;
     delete renderer;
 }

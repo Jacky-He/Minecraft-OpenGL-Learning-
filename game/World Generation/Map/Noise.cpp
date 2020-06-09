@@ -1,13 +1,10 @@
 #include "Noise.hpp"
 
-std::mt19937 g1((unsigned int)time(0));
-int randint (int a, int b) {return std::uniform_int_distribution<int>(a, b)(g1);}
-
 Noise::Noise()
 {
     //generate a random permutation from 0 to 255
     for (int i = 0; i < 256; i++) m_Permutation[i] = i;
-    for (int i = 0; i < 256; i++) std::swap (m_Permutation[i], m_Permutation[randint(i, 255)]);
+    for (int i = 0; i < 256; i++) std::swap (m_Permutation[i], m_Permutation[Util::RandInt(i, 255)]);
     for (int i = 0; i < 512; i++) m_P[i] = m_Permutation[i%256];
 }
 

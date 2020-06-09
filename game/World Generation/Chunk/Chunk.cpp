@@ -10,15 +10,15 @@ std::unique_ptr<IndexBuffer> Chunk::s_IBO = nullptr;
 std::unique_ptr<Shader> Chunk::s_Shader = nullptr;
 int Chunk::s_MaxTextureUnits = 0;
 
-glm::vec3 Chunk::s_DirectionsUnitVectors [] =
+
+std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
 {
-    glm::vec3 (0, 0, 1),
-    glm::vec3 (0, 0, -1),
-    glm::vec3 (-1, 0, 0),
-    glm::vec3 (1, 0, 0),
-    glm::vec3 (0, 1, 0),
-    glm::vec3 (0, -1, 0)
-};
+    if (position.x >= 0) position.x = int(position.x)/16*16;
+    else position.x = (int(position.x)/17 - 1)*16;
+    if (position.z >= 0) position.z = int(position.z)/16*16;
+    else position.z = (int(position.z)/17 - 1)*16;
+    return {position.x, position.z};
+}
 
 void Chunk::SetUp()
 {
@@ -56,7 +56,6 @@ void Chunk::SetUp()
 
 Chunk::Chunk(std::pair <int, int> position):m_BackwardLeftPosition(position)
 {
-    m_Futures.push_back(std::async(std::launch::async, &Chunk::Initialize, this));
 }
 
 Chunk::~Chunk()
@@ -67,6 +66,11 @@ Chunk::~Chunk()
 std::pair <int, int> Chunk::GetPosition()
 {
     return m_BackwardLeftPosition;
+}
+
+void Chunk::Init()
+{
+    m_Futures.push_back(std::async(std::launch::async, &Chunk::Initialize, this));
 }
 
 void Chunk::Initialize()
@@ -132,7 +136,7 @@ std::vector <int> Chunk::GetExposedDirectionsOfCube(glm::vec3 position)
     std::vector <int> res;
     for (int i = 0; i < 6; i++)
     {
-        glm::vec3 temp = position + s_DirectionsUnitVectors[i];
+        glm::vec3 temp = position + Util::s_DirectionsUnitVectors[i];
         BlockType type;
         if (OutOfBound(temp)) type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
         else type = m_BlockTypes [(int)std::round(temp.x) - m_BackwardLeftPosition.first][(int)std::round(temp.z) - m_BackwardLeftPosition.second][(int)std::round(temp.y)];

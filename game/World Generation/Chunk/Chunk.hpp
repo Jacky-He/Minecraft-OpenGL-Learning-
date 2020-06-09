@@ -18,7 +18,6 @@ private:
     static std::unique_ptr<Shader> s_Shader;
     static std::unique_ptr<IndexBuffer> s_IBO;
     static int s_MaxTextureUnits;
-    static glm::vec3 s_DirectionsUnitVectors[6];
     
     std::pair <int, int> m_BackwardLeftPosition; //most negative value 2D
     
@@ -35,7 +34,9 @@ private:
 
 public:
     static void SetUp();
-
+    static std::pair <int, int> GetChunkPositionAt (glm::vec3 position);
+    
+    void Init();
     void Draw(Camera* camera);
     std::pair <int, int> GetPosition();
     Chunk(std::pair <int, int> position);
