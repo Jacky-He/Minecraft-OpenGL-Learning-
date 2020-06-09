@@ -10,12 +10,16 @@ Timer::~Timer()
     
 }
 
-void Timer::Report()
+double Timer::Report(bool print)
 {
-    cout << ((std::clock() - m_Start)/(double)CLOCKS_PER_SEC) << endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - m_Start;
+    double res = diff.count();
+    if (print) cout << res << endl;
+    return res;
 }
 
 void Timer::Reset()
 {
-    m_Start = std::clock();
+    m_Start = std::chrono::high_resolution_clock::now();
 }

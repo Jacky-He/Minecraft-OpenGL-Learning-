@@ -5,6 +5,10 @@ double Constants::deltaTime = 0;
 
 float Constants::EPSILONf = 0.0001f;
 
+float Constants::gravity = 9.81f*2.9f;
+float Constants::terminalVelocity = 22.0f;
+float Constants::jumpVelocity = 10.0f;
+
 unsigned int Constants::cubeIndices [] =
 {
     0, 1, 2,

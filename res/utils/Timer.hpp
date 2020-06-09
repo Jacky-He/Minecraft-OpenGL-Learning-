@@ -4,11 +4,11 @@
 class Timer
 {
 private:
-    std::clock_t m_Start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
 public:
     Timer();
     ~Timer();
-    void Report();
+    double Report(bool print);
     
     void Reset();
 };
