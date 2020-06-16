@@ -12,9 +12,12 @@ private:
     std::set <Chunk*> m_Chunks;
     std::set <std::pair <int, int>> m_ChunkCoords;
     
+    std::queue <Chunk*> m_DeleteQueue;
+    std::mutex m_DeleteQueueMutex;
+    
     void UpdateChunks();
     void DrawChunks();
-    void DeleteChunk(Chunk* chunk);
+    void DeleteChunks();
     void InitChunk(std::pair <int, int> position);
     bool OutOfBound(std::pair<int, int> position);
     

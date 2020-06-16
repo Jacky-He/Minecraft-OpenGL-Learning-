@@ -55,8 +55,7 @@ int main ()
     //load textures finished
     
     //Generate map
-    Map* worldMap = new Map();
-    Map::SetCurrMap(worldMap);
+    Map::SetCurrSeed(100);
     //Generate map finished
     
     //set up Chunk

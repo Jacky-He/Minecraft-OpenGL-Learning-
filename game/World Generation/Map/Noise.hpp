@@ -11,7 +11,7 @@ private:
     double Lerp (double t, double a, double b);
     double Grad (int hash, double x, double y, double z);
 public:
-    Noise();
+    Noise(int seed);
     ~Noise();
     double GenNoise (double x, double y, double z);
 };

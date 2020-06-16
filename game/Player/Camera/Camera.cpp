@@ -9,7 +9,7 @@ Camera::Camera(glm::vec3 position):m_Position(position)
     m_RotationX = glm::radians(0.0f);
     m_RotationY = glm::radians(0.0f);
     
-    m_Proj = glm::perspective(glm::radians(45.0f), Constants::screenAspect, 0.1f, 200.0f);
+    m_Proj = glm::perspective(glm::radians(45.0f), Constants::screenAspect, 0.1f, 180.0f);
     m_View = glm::lookAt(m_Position, m_Position + m_Direction, m_Updir);
     m_PVMatrix = m_Proj*m_View;
 }

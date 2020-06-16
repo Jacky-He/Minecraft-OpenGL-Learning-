@@ -1,5 +1,4 @@
 #include "Player.hpp"
-#include "Map.hpp"
 #include "Constants.hpp"
 #include "Input.hpp"
 
@@ -15,6 +14,7 @@ Player::Player(const std::string& name, glm::vec3 position):m_Name(), m_Position
     
     m_FirstPersonCamera = new Camera(position + glm::vec3(0, s_EyeLevel - s_Height/2.0f, 0));
     SetState(m_MovementState);
+    m_Map = new Map();
 }
 
 Player::~Player()
@@ -100,7 +100,7 @@ std::vector<glm::vec3> Player::GetSurroundingBoxCoords(glm::vec3 origin)
     for (int i = 0; i < 18; i++)
     {
         glm::vec3 temp = currCube + Util::s_DirectionsUnitVectors [i];
-        BlockType type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
+        BlockType type = m_Map -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
         if (Util::isCollidable (type))
         {
             res.push_back(glm::vec3 (temp.x - 0.5, temp.y - 0.5, temp.z - 0.5));

@@ -1,6 +1,5 @@
 #include "Chunk.hpp"
 #include "Constants.hpp"
-#include "Map.hpp"
 #include "Timer.hpp"
 
 std::unique_ptr<VertexArray> Chunk::s_VAO = nullptr;
@@ -9,7 +8,6 @@ std::unique_ptr<IndexBuffer> Chunk::s_IBO = nullptr;
 std::unique_ptr<Shader> Chunk::s_Shader = nullptr;
 std::unique_ptr<Renderer> Chunk::s_Renderer = nullptr;
 int Chunk::s_MaxTextureUnits = 0;
-
 
 std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
 {
@@ -58,6 +56,7 @@ void Chunk::SetUp()
 
 Chunk::Chunk(std::pair <int, int> position):m_BackwardLeftPosition(position)
 {
+    m_Map = new Map();
 }
 
 Chunk::~Chunk()
@@ -77,16 +76,13 @@ void Chunk::Init()
 
 void Chunk::Initialize()
 {
-    std::lock_guard<std::mutex> lock1 (Map::s_Mutex);
-    std::lock_guard<std::mutex> lock2 (Textures::s_Mutex);
-
     for (int k = 0; k < 256; k++)
     {
         for (int i = 0; i < 16; i++)
         {
             for (int j = 0; j < 16; j++)
             {
-                 m_BlockTypes[i][j][k] = Map::CurrMap -> GetBlockTypeAtLocation(m_BackwardLeftPosition.first + i, k, m_BackwardLeftPosition.second + j);
+                 m_BlockTypes[i][j][k] = m_Map -> GetBlockTypeAtLocation(m_BackwardLeftPosition.first + i, k, m_BackwardLeftPosition.second + j);
             }
         }
     }
@@ -182,7 +178,7 @@ std::vector <int> Chunk::GetExposedDirectionsOfCube(glm::vec3 position)
         BlockType type;
         if (OutOfBound(temp))
         {
-            type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
+            type = m_Map -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
         }
         else type = m_BlockTypes [(int)std::round(temp.x) - m_BackwardLeftPosition.first][(int)std::round(temp.z) - m_BackwardLeftPosition.second][(int)std::round(temp.y)];
         if (Util::isEmptyWhenRendering(type)) res.push_back(i);

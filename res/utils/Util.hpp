@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <memory>
 #include <list>
+#include <queue>
 #include <stdio.h>
 #include <future>
 #include <ctime>

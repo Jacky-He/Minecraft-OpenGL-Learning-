@@ -9,7 +9,7 @@
 #include "Input.hpp"
 #include "Map.hpp"
 
-SceneRenderer::SceneRenderer(int radius):m_Radius(radius), m_Chunks(), m_ChunkCoords()
+SceneRenderer::SceneRenderer(int radius):m_Radius(radius), m_Chunks(), m_ChunkCoords(), m_DeleteQueue()
 {
     camera = nullptr;
     glEnable (GL_BLEND);
@@ -29,18 +29,40 @@ void SceneRenderer::InitChunk(std::pair <int, int> position)
     c -> Init();
 }
 
-void SceneRenderer::DeleteChunk(Chunk* chunk)
+void SceneRenderer::DeleteChunks()
 {
-    std::pair <int, int> temppos = chunk -> GetPosition();
-    m_ChunkCoords.erase(temppos);
-    m_Chunks.erase(chunk);
-    delete chunk;
+    std::lock_guard<std::mutex> lock(m_DeleteQueueMutex);
+    while (!m_DeleteQueue.empty())
+    {
+        Chunk* chunk = m_DeleteQueue.front();
+        m_DeleteQueue.pop();
+        delete chunk;
+    }
 }
 
 void SceneRenderer::UpdateChunks()
 {
-    
     std::pair <int, int> campos = Chunk::GetChunkPositionAt(camera -> GetPosition());
+    
+    //delete chunks
+    std::vector <Chunk*> trash;
+    for (Chunk* each: m_Chunks)
+    {
+        std::pair <int, int> pos = each -> GetPosition();
+        if (OutOfBound(pos)) trash.push_back(each);
+    }
+    
+    while (!trash.empty())
+    {
+        Chunk* temp = trash.back();
+        trash.pop_back();
+        std::pair <int, int> temppos = temp -> GetPosition();
+        m_ChunkCoords.erase(temppos);
+        m_Chunks.erase(temp);
+        m_DeleteQueue.push(temp);
+    }
+    
+    m_Futures.push_back(std::async(std::launch::async, &SceneRenderer::DeleteChunks, this));
     
     //add chunks
     std::vector<std::pair <int, int>> v;
@@ -59,24 +81,8 @@ void SceneRenderer::UpdateChunks()
             }
         }
     }
-    
     for (int i = 0; i < (int)v.size(); i++) std::swap(v[i], v[Util::RandInt(i, (int)v.size() - 1)]);
     for (int i = 0; i < (int)v.size(); i++) InitChunk(v[i]);
-    
-    //delete chunks
-    std::vector <Chunk*> trash;
-    for (Chunk* each: m_Chunks)
-    {
-        std::pair <int, int> pos = each -> GetPosition();
-        if (OutOfBound(pos)) trash.push_back(each);
-    }
-    
-    while (!trash.empty())
-    {
-        Chunk* temp = trash.back();
-        trash.pop_back();
-        DeleteChunk(temp);
-    }
 }
 
 bool SceneRenderer::OutOfBound(std::pair <int, int> position)

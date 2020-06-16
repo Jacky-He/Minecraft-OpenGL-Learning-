@@ -3,6 +3,7 @@
 #include "Camera.hpp"
 #include "Listener.hpp"
 #include "Timer.hpp"
+#include "Map.hpp"
 
 enum class MovementState
 {
@@ -17,6 +18,7 @@ private:
     static float s_Depth;
     static float s_EyeLevel;
     
+    Map* m_Map;
     float m_Speed;
     std::string m_Name;
     glm::vec3 m_Position;

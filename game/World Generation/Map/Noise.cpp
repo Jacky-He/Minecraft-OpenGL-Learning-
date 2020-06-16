@@ -1,10 +1,14 @@
 #include "Noise.hpp"
 
-Noise::Noise()
+Noise::Noise(int seed)
 {
     //generate a random permutation from 0 to 255
     for (int i = 0; i < 256; i++) m_Permutation[i] = i;
-    for (int i = 0; i < 256; i++) std::swap (m_Permutation[i], m_Permutation[Util::RandInt(i, 255)]);
+    long long int MODS [4] =
+    {
+        1000000007, 1000000009, 238199344, 231268763
+    };
+    for (int i = 0; i < 256; i++) std::swap(m_Permutation[i], m_Permutation[i + seed*MODS[(seed+i)%4]%(256-i)]);
     for (int i = 0; i < 512; i++) m_P[i] = m_Permutation[i%256];
 }
 

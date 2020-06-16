@@ -6,19 +6,20 @@ class Map
 {
     
 private:
-    Noise m_NoiseFunction;
+//    Noise m_NoiseFunction;
 
 public:
-    static Map* CurrMap;
-    static void SetCurrMap (Map* map);
-    static Map* GetCurrMap ();
+    static int s_CurrSeed;
+    static void SetCurrSeed (int seed);
+    static Noise* s_NoiseFunction;
+//    static Map* CurrMap;
+//    static void SetCurrMap (Map* map);
+//    static Map* GetCurrMap ();
     static std::mutex s_Mutex;
-
+    static std::map <std::pair <std::pair <int, int>, int>, BlockType> s_Lookup;
     
     Map();
     ~Map();
-    std::map <std::pair <std::pair <int, int>, int>, BlockType> m_Lookup;
-    void GenerateTerrain ();
     BlockType GetBlockTypeAtLocation(int x, int y, int z);
     void SetBlockTypeAtLocation (int x, int y, int z, BlockType type);
     Biome GetBiome (int x, int y, int z);

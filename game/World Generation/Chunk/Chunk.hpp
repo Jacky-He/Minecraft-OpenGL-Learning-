@@ -9,6 +9,8 @@
 #include "Texture.hpp"
 #include "Camera.hpp"
 #include "Renderer.hpp"
+#include "Map.hpp"
+
 
 
 class Chunk //16 x 16 x 256
@@ -29,6 +31,8 @@ private:
     std::map<Texture*, int> m_NeededTextures;
     std::vector<Texture*> m_TextureVector;
     std::vector<std::future<void>> m_Futures;
+    
+    Map* m_Map;
     
     void Initialize();
     std::vector <int> GetExposedDirectionsOfCube (glm::vec3 position);
