@@ -24,7 +24,6 @@ int main ()
     
     GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Learn Open GL", nullptr, nullptr);
     
-    Input::Init(window);
 
     int screenWidth, screenHeight;
     glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
@@ -47,7 +46,10 @@ int main ()
     glViewport(0, 0, screenWidth, screenHeight);
     std::cout << glGetString(GL_VERSION) << std::endl;
     
-    
+    //init input and crosshair stuff
+    Input::Init(window);
+    //init input and crosshair finished
+
     //load textures
     Textures::LoadTextures();
     //load textures finished

@@ -17,6 +17,9 @@ private:
     void DeleteChunk(Chunk* chunk);
     void InitChunk(std::pair <int, int> position);
     bool OutOfBound(std::pair<int, int> position);
+    
+    std::mutex m_Mutex;
+    std::vector<std::future<void>> m_Futures;
 
 public:
     SceneRenderer(int radius);

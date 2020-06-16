@@ -83,6 +83,6 @@ double Noise::GenNoise(double x, double y, double z)
                                       Lerp (u, Grad(abb, xdis, ydis - 1, zdis - 1),
                                                Grad(bbb, xdis - 1, ydis - 1, zdis - 1))));
     //output range [0, 1];
-    double normalized = (output + 2)/4.0;
+    double normalized = (output + 1)/2.0;
     return normalized;
 }

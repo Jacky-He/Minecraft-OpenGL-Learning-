@@ -8,6 +8,7 @@
 #include "Textures.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
+#include "Renderer.hpp"
 
 
 class Chunk //16 x 16 x 256
@@ -17,6 +18,7 @@ private:
     static std::unique_ptr<VertexBuffer> s_VBO;
     static std::unique_ptr<Shader> s_Shader;
     static std::unique_ptr<IndexBuffer> s_IBO;
+    static std::unique_ptr<Renderer> s_Renderer;
     static int s_MaxTextureUnits;
     
     std::pair <int, int> m_BackwardLeftPosition; //most negative value 2D

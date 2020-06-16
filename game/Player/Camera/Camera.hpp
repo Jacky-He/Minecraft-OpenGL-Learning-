@@ -12,7 +12,6 @@ private:
     float m_RotationX;
     float m_RotationY;
     glm::vec3 m_Position;
-    glm::vec3 m_Direction;
     glm::vec3 m_Updir;
     
     void UpdateMatrix();
@@ -27,6 +26,7 @@ public:
     glm::mat4 GetPVMatrix();
     glm::vec3 GetPosition ();
     glm::vec3 GetDirection();
+    glm::vec3 m_Direction;
     void SetPosition(glm::vec3 position);
     
     

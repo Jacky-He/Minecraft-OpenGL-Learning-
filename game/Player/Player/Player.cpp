@@ -101,7 +101,7 @@ std::vector<glm::vec3> Player::GetSurroundingBoxCoords(glm::vec3 origin)
     {
         glm::vec3 temp = currCube + Util::s_DirectionsUnitVectors [i];
         BlockType type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
-        if (type != BlockType::EMPTY)
+        if (Util::isCollidable (type))
         {
             res.push_back(glm::vec3 (temp.x - 0.5, temp.y - 0.5, temp.z - 0.5));
         }

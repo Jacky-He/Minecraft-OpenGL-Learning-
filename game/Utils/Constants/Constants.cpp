@@ -1,6 +1,10 @@
 #include "Constants.hpp"
 
 float Constants::screenAspect = 800.0f/600.0f;
+float Constants::screenHeight = 600.0f;
+float Constants::screenWidth = 800.0f;
+
+
 double Constants::deltaTime = 0;
 
 float Constants::EPSILONf = 0.0001f;
@@ -28,6 +32,15 @@ unsigned int Constants::cubeIndices [] =
     
     20, 21, 22,
     22, 23, 20
+};
+
+unsigned int Constants::twoTexIndices[] =
+{
+    0, 1, 2,
+    2, 3, 0,
+    
+    4, 5, 6,
+    6, 7, 4
 };
 
 float Constants::cubeModel [] = {
@@ -61,4 +74,17 @@ float Constants::cubeModel [] = {
     0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 5.0f,
     0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 5.0f,
     -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 5.0f
+};
+
+float Constants::twoTexModel [] =
+{
+    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+    0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f,
+    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+    
+    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+    0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f,
+    -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f
 };

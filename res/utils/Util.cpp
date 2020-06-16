@@ -53,4 +53,20 @@ bool GLLogCall(const char* function, const char* file, int line)
     return res;
 }
 
+bool Util::isEmptyWhenRendering (BlockType type)
+{
+    int idx = static_cast<int>(type);
+    return idx >= 100 || idx == -1;
+}
 
+bool Util::isTwoTex (BlockType type)
+{
+    int idx = static_cast<int>(type);
+    return idx >= 100;
+}
+
+bool Util::isCollidable (BlockType type)
+{
+    int idx = static_cast<int>(type);
+    return idx < 100 && idx != -1;
+}

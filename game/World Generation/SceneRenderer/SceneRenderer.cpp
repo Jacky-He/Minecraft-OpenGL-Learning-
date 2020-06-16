@@ -6,10 +6,14 @@
 #include "IndexBuffer.hpp"
 #include "Renderer.hpp"
 #include "Timer.hpp"
+#include "Input.hpp"
+#include "Map.hpp"
 
 SceneRenderer::SceneRenderer(int radius):m_Radius(radius), m_Chunks(), m_ChunkCoords()
 {
     camera = nullptr;
+    glEnable (GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 SceneRenderer::~SceneRenderer()
@@ -55,9 +59,10 @@ void SceneRenderer::UpdateChunks()
             }
         }
     }
+    
     for (int i = 0; i < (int)v.size(); i++) std::swap(v[i], v[Util::RandInt(i, (int)v.size() - 1)]);
     for (int i = 0; i < (int)v.size(); i++) InitChunk(v[i]);
-
+    
     //delete chunks
     std::vector <Chunk*> trash;
     for (Chunk* each: m_Chunks)
@@ -65,6 +70,7 @@ void SceneRenderer::UpdateChunks()
         std::pair <int, int> pos = each -> GetPosition();
         if (OutOfBound(pos)) trash.push_back(each);
     }
+    
     while (!trash.empty())
     {
         Chunk* temp = trash.back();
@@ -81,13 +87,18 @@ bool SceneRenderer::OutOfBound(std::pair <int, int> position)
 
 void SceneRenderer::DrawChunks()
 {
-    for (Chunk* each : m_Chunks) each -> Draw(camera);
+    for (Chunk* each : m_Chunks)
+    {
+        //check if in view, better solution uses bounding volume hierarchy
+        each -> Draw(camera);
+    }
 }
 
 void SceneRenderer::Render()
 {
     UpdateChunks();
     DrawChunks();
+    Input::DrawCrossHair();
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
 //    Renderer renderer;
@@ -95,7 +106,6 @@ void SceneRenderer::Render()
 //    Block grassBlock (glm::vec3(0, 0, 0), BlockType::GRASS);
 //    grassBlock.Draw(renderer, camera);
 }
-
 
 void SceneRenderer::SetCamera(Camera* camera)
 {

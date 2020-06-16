@@ -1,13 +1,13 @@
 #include "Chunk.hpp"
 #include "Constants.hpp"
 #include "Map.hpp"
-#include "Renderer.hpp"
 #include "Timer.hpp"
 
 std::unique_ptr<VertexArray> Chunk::s_VAO = nullptr;
 std::unique_ptr<VertexBuffer> Chunk::s_VBO = nullptr;
 std::unique_ptr<IndexBuffer> Chunk::s_IBO = nullptr;
 std::unique_ptr<Shader> Chunk::s_Shader = nullptr;
+std::unique_ptr<Renderer> Chunk::s_Renderer = nullptr;
 int Chunk::s_MaxTextureUnits = 0;
 
 
@@ -23,9 +23,11 @@ std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
 void Chunk::SetUp()
 {
     s_VAO = std::make_unique<VertexArray>();
-    s_VBO = std::make_unique<VertexBuffer>(nullptr, sizeof(float)*144*16*16*256);
-    s_IBO = std::make_unique<IndexBuffer> (nullptr, 36*16*16*256);
+    s_VBO = std::make_unique<VertexBuffer>(nullptr, sizeof(float)*144*16*16*256, GL_DYNAMIC_DRAW);
+    s_IBO = std::make_unique<IndexBuffer> (nullptr, 36*16*16*256, GL_DYNAMIC_DRAW);
     s_Shader = std::make_unique<Shader>("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/cube.shader");
+    s_Renderer = std::make_unique<Renderer> ();
+    
     VertexBufferLayout layout;
     layout.Push<float>(3);
     layout.Push<float>(2);
@@ -77,11 +79,18 @@ void Chunk::Initialize()
 {
     std::lock_guard<std::mutex> lock1 (Map::s_Mutex);
     std::lock_guard<std::mutex> lock2 (Textures::s_Mutex);
+
+    for (int k = 0; k < 256; k++)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            for (int j = 0; j < 16; j++)
+            {
+                 m_BlockTypes[i][j][k] = Map::CurrMap -> GetBlockTypeAtLocation(m_BackwardLeftPosition.first + i, k, m_BackwardLeftPosition.second + j);
+            }
+        }
+    }
     
-    for (int i = 0; i < 16; i++)
-        for (int j = 0; j < 16; j++)
-            for (int k = 0; k < 256; k++)
-                m_BlockTypes[i][j][k] = Map::CurrMap -> GetBlockTypeAtLocation(m_BackwardLeftPosition.first + i, k, m_BackwardLeftPosition.second + j);
     for (int i = m_BackwardLeftPosition.first; i < m_BackwardLeftPosition.first + 16; i++)
     {
         for (int j = m_BackwardLeftPosition.second; j < m_BackwardLeftPosition.second + 16; j++)
@@ -91,10 +100,43 @@ void Chunk::Initialize()
                 BlockType type = m_BlockTypes[i - m_BackwardLeftPosition.first][j - m_BackwardLeftPosition.second][k];
                 if (type == BlockType::EMPTY) continue;
                 
+                //deal with Two Tex
+                if (Util::isTwoTex(type))
+                {
+                    Texture* texture = Textures::GetTexture (type, Direction::CENTER);
+
+                    int textureidx = -1;
+                    if (m_NeededTextures.find (texture) != m_NeededTextures.end()) textureidx = m_NeededTextures[texture];
+                    else
+                    {
+                        m_NeededTextures[texture] = (int)m_TextureVector.size();
+                        m_TextureVector.push_back(texture);
+                        textureidx = (int)m_TextureVector.size() - 1;
+                    }
+                    for (int offset1 = 0; offset1 < 2*24; offset1 += 24)
+                    {
+                        for (int l = 0; l < 4; l++)
+                        {
+                            int offset2 = 6*l;
+                            for (int m = 0; m < 6; m++)
+                            {
+                                if (m == 5) m_CubeInfo.push_back(textureidx);
+                                else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
+                                else if (m == 2) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + j);
+                                else if (m == 1) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + k);
+                                else m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + i);
+                            }
+                        }
+                    }
+                    continue;
+                }
+                
+                //deal with cube
                 std::vector <int> v = GetExposedDirectionsOfCube(glm::vec3(i, k, j));
                 for (unsigned int x = 0; x < v.size(); x++)
                 {
                     Texture* texture = Textures::GetTexture(type, static_cast<Direction>(v[x]));
+                    
                     int textureidx = -1;
                     if (m_NeededTextures.find(texture) != m_NeededTextures.end())
                     {
@@ -106,7 +148,7 @@ void Chunk::Initialize()
                         m_TextureVector.push_back(texture);
                         textureidx = (int)m_TextureVector.size() - 1;
                     }
-                                        
+                    
                     int offset1 = v[x]*24;
                     for (int l = 0; l < 4; l++)
                     {
@@ -138,17 +180,18 @@ std::vector <int> Chunk::GetExposedDirectionsOfCube(glm::vec3 position)
     {
         glm::vec3 temp = position + Util::s_DirectionsUnitVectors[i];
         BlockType type;
-        if (OutOfBound(temp)) type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
+        if (OutOfBound(temp))
+        {
+            type = Map::CurrMap -> GetBlockTypeAtLocation((int)std::round(temp.x), (int)std::round(temp.y), (int)std::round(temp.z));
+        }
         else type = m_BlockTypes [(int)std::round(temp.x) - m_BackwardLeftPosition.first][(int)std::round(temp.z) - m_BackwardLeftPosition.second][(int)std::round(temp.y)];
-        if (type == BlockType::EMPTY) res.push_back(i);
+        if (Util::isEmptyWhenRendering(type)) res.push_back(i);
     }
     return res;
 }
 
 void Chunk::Draw(Camera* camera)
 {
-    Renderer renderer;
-   
     if (m_NeededTextures.size() <= s_MaxTextureUnits)
     {
         for (int i = 0; i < m_TextureVector.size(); i++) m_TextureVector[i] -> Bind(i);
@@ -157,7 +200,7 @@ void Chunk::Draw(Camera* camera)
         glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
 
-        renderer.Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)m_CubeInfo.size()/24);
+        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)m_CubeInfo.size()/24);
         return;
     }
     
@@ -198,6 +241,6 @@ void Chunk::Draw(Camera* camera)
         glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
 
-        renderer.Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)loadInfo.size()/24);
+        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)loadInfo.size()/24);
     }
 }

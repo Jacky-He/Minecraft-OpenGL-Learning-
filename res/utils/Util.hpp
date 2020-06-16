@@ -36,12 +36,19 @@ bool GLLogCall(const char* function, const char* file, int line);
 
 enum class BlockType
 {
-    GRASS = 0, EMPTY = -1
+    EMPTY = -1, GRASS = 0, DIRT = 1, OAKLEAF = 2, OAKLOG = 3,
+    
+    TALLGRASS = 100, AZUREBLUET = 101, CORNFLOWER = 102, OXEYEDAISY = 103
 };
 
 enum class Direction
 {
     FORWARD = 0, BACKWARD = 1, LEFT = 2, RIGHT = 3, UP = 4, DOWN = 5, UPFORWARD = 6, UPBACKWARD = 7, UPLEFT = 8, UPRIGHT = 9, DOWNFOWARD = 10, DOWNBACKWARD = 11, DOWNLEFT = 12, DOWNRIGHT = 13, LEFTFORWARD = 14, LEFTBACKWARD = 15, RIGHTFORWARD = 16, RIGHTBACKWARD = 17, LEFTUPFORWARD = 18, LEFTUPBACKWARD = 19, RIHGTUPFORWARD = 20, RIGHTUPBACKWARD = 21, LEFTDOWNFORWARD = 22, LEFTDOWNBACKWARD = 23, RIGHTDOWNFORWARD = 24, RIGHTDOWNBACKWARD = 25, CENTER = 26
+};
+
+enum class Biome
+{
+    WATER, PLAIN, FOREST
 };
 
 class Util
@@ -51,4 +58,7 @@ private:
 public:
     static glm::vec3 s_DirectionsUnitVectors [27];
     static int RandInt (int a, int b);
+    static bool isEmptyWhenRendering (BlockType type);
+    static bool isTwoTex (BlockType type);
+    static bool isCollidable (BlockType type);
 };
