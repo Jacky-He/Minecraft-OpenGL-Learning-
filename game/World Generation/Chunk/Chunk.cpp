@@ -88,6 +88,16 @@ void Chunk::Init()
     m_Futures.push_back(std::async(std::launch::async, &Chunk::Initialize, this));
 }
 
+glm::vec3 Chunk::GetPVertex(glm::vec4 plane)
+{
+    std::pair <int, int> p = m_BackwardLeftPosition;
+    glm::vec3 res = glm::vec3 (float(p.first) - 0.5f, -0.5f, float(p.second - 0.5f));
+    if (plane.x >= 0) res.x = float(p.first + 15) + 0.5f;
+    if (plane.y >= 0) res.y = 255.5f;
+    if (plane.z >= 0) res.z = float(p.second + 15) + 0.5f;
+    return res;
+}
+
 void Chunk::Initialize()
 {
     std::pair <int, int> p = m_BackwardLeftPosition;

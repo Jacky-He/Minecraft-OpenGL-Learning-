@@ -55,6 +55,7 @@ public:
     std::vector <glm::vec3> GetChunkVertices();
     std::vector<std::pair<glm::vec3, glm::vec3>> GetChunkEdges();
     std::vector<std::pair<std::pair<glm::vec3, glm::vec3>, std::pair<glm::vec3, glm::vec3>>> GetChunkFaces();
+    glm::vec3 GetPVertex(glm::vec4 plane);
     std::pair <int, int> GetPosition();
     Chunk(std::pair <int, int> position);
     ~Chunk();
