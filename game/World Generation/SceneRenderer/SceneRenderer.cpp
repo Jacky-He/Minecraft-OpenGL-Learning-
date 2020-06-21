@@ -93,11 +93,50 @@ bool SceneRenderer::OutOfBound(std::pair <int, int> position)
 
 void SceneRenderer::DrawChunks()
 {
+    int cnt = 0;
     for (Chunk* each : m_Chunks)
     {
-        //check if in view, better solution uses bounding volume hierarchy
-        each -> Draw(camera);
+        //check if in view, better solution uses bounding volume hierarchy (checking intersection kinda expensive) (maybe later)
+        if (InView (each)) each -> Draw(camera);
     }
+}
+
+// geometric approach would be better though, but this is easier for me to understand for now
+bool SceneRenderer::InView(Chunk* c)
+{
+    std::vector <std::pair <std::pair<glm::vec3, glm::vec3>, std::pair<glm::vec3, glm::vec3>>> faces = c -> GetChunkFaces();
+    glm::mat4 mat = camera -> GetPVMatrix();
+    glm::vec4 r4 = glm::row(mat, 3);
+    std::vector <glm::vec4> planes;
+    
+    //get frustum planes
+    for (int row = 0; row < 3; row++)
+    {
+        glm::vec4 curr = glm::row(mat, row);
+        planes.push_back(r4 - curr);
+        planes.push_back(r4 + curr);
+    }
+    
+    //check intersections
+    for (std::pair<std::pair<glm::vec3, glm::vec3>, std::pair<glm::vec3, glm::vec3>> face: faces)
+    {
+        bool flag = true;
+        for (glm::vec4 plane : planes)
+        {
+            bool a = SameSideAsPlaneNormal(plane, glm::vec4(face.first.first, 1));
+            bool b = SameSideAsPlaneNormal(plane, glm::vec4(face.first.second, 1));
+            bool c = SameSideAsPlaneNormal(plane, glm::vec4(face.second.first, 1));
+            bool d = SameSideAsPlaneNormal(plane, glm::vec4(face.second.second, 1));
+            if (!a && !b && !c && !d) {flag = false; break;}
+        }
+        if (flag) return true;
+    }
+    return false;
+}
+
+bool SceneRenderer::SameSideAsPlaneNormal (glm::vec4 plane, glm::vec4 point)
+{
+    return glm::dot(plane, point) > 0;
 }
 
 void SceneRenderer::Render()
@@ -105,12 +144,10 @@ void SceneRenderer::Render()
     UpdateChunks();
     DrawChunks();
     Input::DrawCrossHair();
+    
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
 //    Renderer renderer;
-//
-//    Block grassBlock (glm::vec3(0, 0, 0), BlockType::GRASS);
-//    grassBlock.Draw(renderer, camera);
 }
 
 void SceneRenderer::SetCamera(Camera* camera)

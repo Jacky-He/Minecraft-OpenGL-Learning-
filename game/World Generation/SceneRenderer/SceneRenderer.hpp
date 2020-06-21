@@ -20,6 +20,8 @@ private:
     void DeleteChunks();
     void InitChunk(std::pair <int, int> position);
     bool OutOfBound(std::pair<int, int> position);
+    bool InView (Chunk* c);
+    bool SameSideAsPlaneNormal (glm::vec4 plane, glm::vec4 point);
     
     std::mutex m_Mutex;
     std::vector<std::future<void>> m_Futures;

@@ -130,14 +130,14 @@ void Player::ProcessCollision (glm::vec3 dir, float distance, glm::vec3 gravityd
         for (int j = 0; j < (int)surroundPos.size(); j++)
         {
             glm::vec3 pos = surroundPos[j];
-            bool collideX = pos.x + 1.0f > playerPos.x && playerPos.x + s_Width > pos.x;
-            bool collideY = pos.y + 1.0f > playerPos.y && playerPos.y + s_Height > pos.y;
-            bool collideZ = pos.z + 1.0f > playerPos.z && playerPos.z + s_Width > pos.z;
+            bool collideX = pos.x + 1.0f >= playerPos.x && playerPos.x + s_Width >= pos.x;
+            bool collideY = pos.y + 1.0f >= playerPos.y && playerPos.y + s_Height >= pos.y;
+            bool collideZ = pos.z + 1.0f >= playerPos.z && playerPos.z + s_Width >= pos.z;
             if (collideX && collideY && collideZ) {collision = true; break;}
         }
         if (!collision)
         {
-            if ((targets[i] - GetPosition()).y == 0.0f) {m_GravityDownVelocity.y = 0; m_JumpReset = true;}
+            if ((targets[i] - GetPosition()).y == 0.0f) {m_GravityDownVelocity.y = 0.0f; m_JumpReset = true;}
             SetPosition(targets[i]);
             break;
         }

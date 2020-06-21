@@ -18,6 +18,20 @@ std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
     return {position.x, position.z};
 }
 
+std::vector<std::pair<std::pair<glm::vec3, glm::vec3>, std::pair<glm::vec3, glm::vec3>>> Chunk::GetChunkFaces()
+{
+    return m_Faces;
+}
+
+std::vector <std::pair<glm::vec3, glm::vec3>> Chunk::GetChunkEdges()
+{
+    return m_Edges;
+}
+std::vector <glm::vec3> Chunk::GetChunkVertices ()
+{
+    return m_Vertices;
+}
+
 void Chunk::SetUp()
 {
     s_VAO = std::make_unique<VertexArray>();
@@ -76,6 +90,39 @@ void Chunk::Init()
 
 void Chunk::Initialize()
 {
+    std::pair <int, int> p = m_BackwardLeftPosition;
+    m_Vertices.push_back(glm::vec3 (float(p.first) - 0.5f, -0.5f, float(p.second) - 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first + 15) + 0.5f, -0.5f, float(p.second) - 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first + 15) + 0.5f, -0.5f, float(p.second + 15) + 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first) - 0.5f, -0.5f, float(p.second + 15) + 0.5f));
+    
+    m_Vertices.push_back(glm::vec3 (float(p.first) - 0.5f, 255.5f, float(p.second) - 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first + 15) + 0.5f, 255.5f, float(p.second) - 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first + 15) + 0.5f, 255.5f, float(p.second + 15) + 0.5f));
+    m_Vertices.push_back(glm::vec3 (float(p.first) - 0.5f, 255.5f, float(p.second + 15) + 0.5f));
+    
+    m_Edges.push_back({m_Vertices[0], m_Vertices[1]});
+    m_Edges.push_back({m_Vertices[1], m_Vertices[2]});
+    m_Edges.push_back({m_Vertices[2], m_Vertices[3]});
+    m_Edges.push_back({m_Vertices[3], m_Vertices[0]});
+    
+    m_Edges.push_back({m_Vertices[4], m_Vertices[5]});
+    m_Edges.push_back({m_Vertices[5], m_Vertices[6]});
+    m_Edges.push_back({m_Vertices[6], m_Vertices[7]});
+    m_Edges.push_back({m_Vertices[7], m_Vertices[4]});
+    
+    m_Edges.push_back({m_Vertices[0], m_Vertices[4]});
+    m_Edges.push_back({m_Vertices[1], m_Vertices[5]});
+    m_Edges.push_back({m_Vertices[2], m_Vertices[6]});
+    m_Edges.push_back({m_Vertices[3], m_Vertices[7]});
+    
+    m_Faces.push_back({m_Edges[0], m_Edges[2]});
+    m_Faces.push_back({m_Edges[4], m_Edges[6]});
+    m_Faces.push_back({m_Edges[0], m_Edges[4]});
+    m_Faces.push_back({m_Edges[1], m_Edges[5]});
+    m_Faces.push_back({m_Edges[2], m_Edges[6]});
+    m_Faces.push_back({m_Edges[3], m_Edges[7]});
+    
     for (int k = 0; k < 256; k++)
     {
         for (int i = 0; i < 16; i++)

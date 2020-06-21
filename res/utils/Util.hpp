@@ -25,6 +25,7 @@
 #include <set>
 #include "../libs/glm/glm.hpp"
 #include "../libs/glm/gtc/matrix_transform.hpp"
+#include "../libs/glm/gtc/matrix_access.hpp"
 #include "../libs/glm/gtx/rotate_vector.hpp"
 
 #define GLCall(x) GLClearError(); x; assert(GLLogCall(#x, __FILE__, __LINE__))

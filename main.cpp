@@ -63,14 +63,14 @@ int main ()
     //set up Chunk finished
     
     GameControl::sharedInstance().Start();
-    Player* player = new Player("Jacky", glm::vec3(0, 180, 0));
+    Player* player = new Player("Jacky", glm::vec3(8, 180, 2));
     player -> Start();
     SceneRenderer* renderer = new SceneRenderer(112);
     renderer -> SetCamera(player -> m_FirstPersonCamera);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    
+
     double timeFromStart = glfwGetTime();
     while (!glfwWindowShouldClose(window))
     {
