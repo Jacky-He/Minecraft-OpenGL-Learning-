@@ -20,40 +20,75 @@ void Map::SetCurrSeed(int seed)
 {
     s_CurrSeed = seed;
 }
-//void Map::SetCurrMap(Map *map)
-//{
-//    CurrMap = map;
-//}
-//
-//Map* Map::GetCurrMap()
-//{
-//    return CurrMap;
-//}
+
+double Map::GetHeightAtLocation (int x, int y, int z)
+{
+    Biome biome = GetBiome(x, y, z);
+    switch (biome)
+    {
+        case Biome::PLAIN:
+        {
+            int baseheight = 63;
+            double xt = x*0.005;
+            double zt = z*0.005;
+            double noise = 2*(s_NoiseFunction -> GenNoise(14*xt, 0, 14*zt)) + 3*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 4*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5));
+            return noise + baseheight;
+        }
+        case Biome::FOREST:
+        {
+            int baseheight = 63;
+            double xt = x*0.01;
+            double zt = z*0.01;
+            double noise = 15*(s_NoiseFunction -> GenNoise(3*xt, 0, 3*zt)) + 30*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 5*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5)) + 15*(s_NoiseFunction -> GenNoise(2*xt, 0, 2*zt));
+            noise = noise/65;
+            noise = pow(noise, 3);
+            return noise*70 + baseheight;
+        }
+        default: return 0;
+    }
+}
+
+std::pair <int, int> Map::GetChunkPositionAt (glm::vec3 position)
+{
+    if (position.x >= 0) position.x = int(position.x)/16*16;
+    else position.x = (int(position.x)/16 - 1)*16;
+    if (position.z >= 0) position.z = int(position.z)/16*16;
+    else position.z = (int(position.z)/16 - 1)*16;
+    return {position.x, position.z};
+}
+
+int Map::InterpolateHeightAtLocation (int x, int y, int z)
+{
+    std::pair <int, int> p1 = GetChunkPositionAt(glm::vec3 (x, y, z));
+    std::pair <int, int> p2 = {p1.first + 15, p1.second};
+    std::pair <int, int> p3 = {p1.first + 15, p1.second + 15};
+    std::pair <int, int> p4 = {p1.first, p1.second + 15};
+    double v1 = GetHeightAtLocation(p1.first, 0, p1.second);
+    double v2 = GetHeightAtLocation(p2.first, 0, p2.second);
+    double v3 = GetHeightAtLocation(p3.first, 0, p3.second);
+    double v4 = GetHeightAtLocation(p4.first, 0, p4.second);
+    double a1 = v1*(p2.first - x)/15.0 + v2*(x - p1.first)/15.0;
+    double a2 = v4*(p3.first - x)/15.0 + v3*(x - p4.first)/15.0;
+    double res = a1*(p3.second - z)/15.0 + a2*(z - p2.second)/15.0;
+    return res;
+}
 
 BlockType Map::GetBlockTypeAtLocation (int x, int y, int z)
 {
-    
     if (s_Lookup.find({{x, y}, z}) != s_Lookup.end()) return s_Lookup[{{x, y}, z}];
+    int height = (int)round(InterpolateHeightAtLocation(x, y, z));
     Biome biome = GetBiome(x, y, z);
     switch (biome)
     {
         case Biome::WATER:
-            return GENWater(x, y, z);
+            return GENWater(x, y, z, height);
         case Biome::PLAIN:
-            return GENPlain(x, y, z);
+            return GENPlain(x, y, z, height);
         case Biome::FOREST:
-            return GENForest(x, y, z);
+            return GENForest(x, y, z, height);
         default:
             break;
     }
-    
-    BlockType res = BlockType::EMPTY;
-    double xt = x*0.01;
-    double zt = z*0.01;
-    double val = s_NoiseFunction -> GenNoise(xt, 0, zt);
-    double height = val*256;
-    if (y <= height) res = BlockType::GRASS;
-    return res;
 }
 
 void Map::SetBlockTypeAtLocation (int x, int y, int z, BlockType type)
@@ -68,24 +103,16 @@ Biome Map::GetBiome(int x, int y, int z)
     double val = s_NoiseFunction -> GenNoise(xt, 0, zt);
     if (val < 0.3) return Biome::PLAIN;
     else return Biome::FOREST;
-//    if (val < 0.2) return Biome::WATER;
-//    else if (val < 0.3) return Biome::PLAIN;
-//    else return Biome::FOREST;
 }
 
-BlockType Map::GENWater(int x, int y, int z)
+BlockType Map::GENWater(int x, int y, int z, int height)
 {
     return BlockType::EMPTY;
 }
 
-BlockType Map::GENPlain(int x, int y, int z)
+BlockType Map::GENPlain(int x, int y, int z, int height)
 {
-    int baseheight = 63;
-    double xt = x*0.005;
-    double zt = z*0.005;
-    double noise = 2*(s_NoiseFunction -> GenNoise(14*xt, 0, 14*zt)) + 3*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 4*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5));
-    int height = int(noise) + baseheight;
-    double vegyval = s_NoiseFunction -> GenNoise(202.2423*xt, 0, 384.93*zt);
+    double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
     if (y == height + 1)
     {
         if (vegyval < 0.20) return BlockType::AZUREBLUET;
@@ -97,17 +124,10 @@ BlockType Map::GENPlain(int x, int y, int z)
     return BlockType::EMPTY;
 }
 
-BlockType Map::GENForest(int x, int y, int z)
+BlockType Map::GENForest(int x, int y, int z, int height)
 {
-    int baseheight = 63;
-    double xt = x*0.01;
-    double zt = z*0.01;
-    double noise = 15*(s_NoiseFunction -> GenNoise(3*xt, 0, 3*zt)) + 30*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 5*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5)) + 15*(s_NoiseFunction -> GenNoise(2*xt, 0, 2*zt));
-    noise = noise/65;
-    noise = pow(noise, 3);
-    int height = int(noise*70) + baseheight;
-    double vegyval = s_NoiseFunction -> GenNoise(202.2423*xt, 0, 384.93*zt);
-    double treeextraheight = 4*(s_NoiseFunction -> GenNoise(222.38*xt, 0, 84.72*zt));
+    double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
+    double treeextraheight = 4*(s_NoiseFunction -> GenNoise(222.38*x, 0, 84.72*z));
     if (vegyval < 0.20)
     {
         int radius = 2;

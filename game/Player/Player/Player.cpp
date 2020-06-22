@@ -6,6 +6,12 @@ float Player::s_Height = 1.8f;
 float Player::s_Width = 0.6f;
 float Player::s_EyeLevel = 1.62f;
 
+std::unique_ptr<VertexArray> Player::s_VAO = nullptr;
+std::unique_ptr<VertexBuffer> Player::s_VBO = nullptr;
+std::unique_ptr<Renderer> Player::s_Renderer = nullptr;
+std::unique_ptr<Shader> Player::s_Shader = nullptr;
+std::unique_ptr<IndexBuffer> Player::s_IBO = nullptr;
+
 Player::Player(const std::string& name, glm::vec3 position):m_Name(), m_Position(position), m_MovementState(MovementState::WALKING), m_GravityDownVelocity(glm::zero<glm::vec3>()), m_JumpReset(false), m_SpacePressed(false)
 {
     using namespace std::placeholders;
@@ -24,6 +30,41 @@ Player::~Player()
     m_ActiveDirections.clear();
 }
 
+void Player::Init()
+{
+    unsigned int ref [36] =
+    {
+        0, 1, 2,
+        2, 3, 0,
+        
+        4, 5, 6,
+        6, 7, 4,
+        
+        0, 1, 5,
+        5, 4, 0,
+        
+        3, 2, 6,
+        6, 7, 3,
+        
+        1, 2, 6,
+        6, 5, 1,
+        
+        3, 0, 4,
+        4, 7, 3
+    };
+    
+    unsigned int indices [432];
+    for (int e = 0; e < 12; e++) for (int i = 0; i < 36; i++) indices[e*36 + i] = ref[i] + e*8;
+    s_VAO = std::make_unique<VertexArray>();
+    s_VBO = std::make_unique<VertexBuffer>(nullptr, sizeof(float)*384, GL_DYNAMIC_DRAW);
+    s_IBO = std::make_unique<IndexBuffer>(indices, 432, GL_DYNAMIC_DRAW);
+    s_Shader = std::make_unique<Shader> ("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/line.shader");
+    VertexBufferLayout layout;
+    layout.Push<float>(4);
+    s_VAO -> AddBuffer(*s_VBO, layout);
+    s_Renderer = std::make_unique<Renderer>();
+}
+
 void Player::Start()
 {
     m_FirstPersonCamera -> Start();
@@ -39,6 +80,9 @@ void Player::Update()
     CheckJump();
     Move(GetMovementDirection(), m_DeltaDistance*m_Moving, m_GravityDownVelocity*(float)Constants::deltaTime);
     m_FirstPersonCamera -> Update();
+    
+    std::pair <glm::vec3, BlockType> target = GetRayCastTarget();
+    if (target.second != BlockType::EMPTY) HighLightHitElement(target.first);
 }
 
 void Player::SetSpeed(float speed)
@@ -222,4 +266,45 @@ void Player::CheckJump()
         m_GravityDownVelocity.y = Constants::jumpVelocity;
         m_JumpReset = false;
     }
+}
+
+std::pair <glm::vec3, BlockType> Player::GetRayCastTarget()
+{
+    glm::vec3 dir = glm::normalize(m_FirstPersonCamera -> GetDirection());
+    glm::vec3 pos = m_FirstPersonCamera -> GetPosition();
+    glm::vec3 prev = glm::zero<glm::vec3>();
+    for (int i = 0; i <= 450; i++)
+    {
+        double dis = 0.01*i;
+        glm::vec3 curr = pos + float(dis)*dir;
+        curr.x = round(curr.x); curr.y = round(curr.y); curr.z = round(curr.z);
+        if (i == 0 || curr != prev)
+        {
+            BlockType type = m_Map -> GetBlockTypeAtLocation(curr.x, curr.y, curr.z);
+            if (Util::isBreakable(type)) return {curr, type};
+        }
+        prev = curr;
+    }
+    return {glm::zero<glm::vec3>(), BlockType::EMPTY};
+}
+
+void Player::HighLightHitElement(glm::vec3 pos)
+{
+    float data [384];
+    for (int offset = 0; offset < 384; offset += 4)
+    {
+        glm::vec4 tpos = glm::vec4(Constants::cubeOutLineModel[offset], Constants::cubeOutLineModel[offset + 1], Constants::cubeOutLineModel[offset + 2], Constants::cubeOutLineModel[offset + 3]);
+//        tpos.x += (tpos.x > 0 ? 0.002 : -0.002);
+//        tpos.y += (tpos.y > 0 ? 0.002 : -0.002);
+//        tpos.z += (tpos.z > 0 ? 0.002 : -0.002);
+        tpos += glm::vec4(pos, 0);
+        data[offset] = tpos.x;
+        data[offset + 1] = tpos.y;
+        data[offset + 2] = tpos.z;
+        data[offset + 3] = tpos.w;
+    }
+    s_Shader -> SetUniformMat4f("u_MVP", m_FirstPersonCamera -> GetPVMatrix());
+    s_VBO -> SetData(data, sizeof(data));
+    s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader);
+//    s_Renderer -> DrawLines(*s_VAO, *s_Shader, 96/4);
 }

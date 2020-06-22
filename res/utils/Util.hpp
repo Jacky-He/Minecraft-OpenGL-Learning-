@@ -38,7 +38,7 @@ bool GLLogCall(const char* function, const char* file, int line);
 
 enum class BlockType
 {
-    EMPTY = -1, GRASS = 0, DIRT = 1, OAKLEAF = 2, OAKLOG = 3,
+    EMPTY = -1, GRASS = 0, DIRT = 1, OAKLEAF = 2, OAKLOG = 3, SAND = 4,
     
     TALLGRASS = 100, AZUREBLUET = 101, CORNFLOWER = 102, OXEYEDAISY = 103
 };
@@ -63,4 +63,5 @@ public:
     static bool isEmptyWhenRendering (BlockType type);
     static bool isTwoTex (BlockType type);
     static bool isCollidable (BlockType type);
+    static bool isBreakable (BlockType type);
 };

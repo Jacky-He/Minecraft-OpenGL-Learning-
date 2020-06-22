@@ -70,3 +70,9 @@ bool Util::isCollidable (BlockType type)
     int idx = static_cast<int>(type);
     return idx < 100 && idx != -1;
 }
+
+bool Util::isBreakable(BlockType type)
+{
+    int idx = static_cast<int>(type);
+    return idx != -1;
+}

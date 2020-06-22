@@ -9,5 +9,6 @@ class Renderer
 public:
     void Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const;
     void Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader, int count) const;
+    void DrawLines(const VertexArray &va, const Shader& shader, int count) const;
     void Clear() const;
 };

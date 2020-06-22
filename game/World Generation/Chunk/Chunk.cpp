@@ -12,9 +12,9 @@ int Chunk::s_MaxTextureUnits = 0;
 std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
 {
     if (position.x >= 0) position.x = int(position.x)/16*16;
-    else position.x = (int(position.x)/17 - 1)*16;
+    else position.x = (int(position.x)/16 - 1)*16;
     if (position.z >= 0) position.z = int(position.z)/16*16;
-    else position.z = (int(position.z)/17 - 1)*16;
+    else position.z = (int(position.z)/16 - 1)*16;
     return {position.x, position.z};
 }
 
@@ -248,7 +248,7 @@ void Chunk::Draw(Camera* camera)
     if (m_NeededTextures.size() <= s_MaxTextureUnits)
     {
         for (int i = 0; i < m_TextureVector.size(); i++) m_TextureVector[i] -> Bind(i);
-        s_VBO -> SetData(&m_CubeInfo[0], sizeof(float)*(int)m_CubeInfo.size());
+        s_VBO -> SetDataMap (&m_CubeInfo[0], sizeof(float)*(int)m_CubeInfo.size());
         
         glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);

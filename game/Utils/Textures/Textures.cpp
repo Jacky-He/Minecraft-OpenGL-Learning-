@@ -19,14 +19,17 @@ void Textures::LoadTextures()
     m_Textures["oak leaf_top"] = m_Textures["oak leaf_side"] = m_Textures["oak leaf_bottom"] = new Texture("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/textures/Vegetations/Oak Tree/oak_leaf.png");
     m_Textures["oak log_top"] = m_Textures["oak log_bottom"] = new Texture("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/textures/Vegetations/Oak Tree/oak_log_top.png");
     m_Textures["oak log_side"] = new Texture("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/textures/Vegetations/Oak Tree/oak_log_side.png");
+    m_Textures["sand_top"] = m_Textures["sand_side"] = m_Textures["sand_bottom"] = new Texture("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/textures/Blocks/Sand/sand.png");
     m_BlockTypeToString [0] = "grass";
     m_BlockTypeToString [1] = "dirt";
     m_BlockTypeToString [2] = "oak leaf";
     m_BlockTypeToString [3] = "oak log";
+    m_BlockTypeToString [4] = "sand";
     m_BlockTypeToString [100] = "tall grass";
     m_BlockTypeToString [101] = "azure bluet";
     m_BlockTypeToString [102] = "cornflower";
     m_BlockTypeToString [103] = "oxeye daisy";
+    
 }
 
 Texture* Textures::GetTexture(const std::string &name)

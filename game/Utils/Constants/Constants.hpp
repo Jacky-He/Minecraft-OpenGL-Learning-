@@ -16,4 +16,5 @@ public:
     static unsigned int twoTexIndices [12];
     static float cubeModel [144];
     static float twoTexModel [48];
+    static float cubeOutLineModel [384];
 };
