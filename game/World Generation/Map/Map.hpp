@@ -12,9 +12,6 @@ public:
     static int s_CurrSeed;
     static void SetCurrSeed (int seed);
     static Noise* s_NoiseFunction;
-//    static Map* CurrMap;
-//    static void SetCurrMap (Map* map);
-//    static Map* GetCurrMap ();
     static std::mutex s_Mutex;
     static std::map <std::pair <std::pair <int, int>, int>, BlockType> s_Lookup;
     
@@ -26,6 +23,10 @@ public:
     void SetBlockTypeAtLocation (int x, int y, int z, BlockType type);
     std::pair <int, int> GetChunkPositionAt(glm::vec3 position);
     Biome GetBiome (int x, int y, int z);
+    
+    std::map <std::pair <int, int>, double> m_HeightMap;
+    std::deque <std::pair <int, int>> m_HeightMapOrder;
+    int m_HeightMapLimits;
 
     BlockType GENWater(int x, int y, int z, int height);
     BlockType GENPlain(int x, int y, int z, int height);

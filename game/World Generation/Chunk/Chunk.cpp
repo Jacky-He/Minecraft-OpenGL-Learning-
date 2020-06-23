@@ -12,9 +12,9 @@ int Chunk::s_MaxTextureUnits = 0;
 std::pair <int, int> Chunk::GetChunkPositionAt (glm::vec3 position)
 {
     if (position.x >= 0) position.x = int(position.x)/16*16;
-    else position.x = (int(position.x)/16 - 1)*16;
+    else position.x = ((int(position.x) + 1)/16 - 1)*16;
     if (position.z >= 0) position.z = int(position.z)/16*16;
-    else position.z = (int(position.z)/16 - 1)*16;
+    else position.z = ((int(position.z) + 1)/16 - 1)*16;
     return {position.x, position.z};
 }
 
@@ -133,92 +133,16 @@ void Chunk::Initialize()
     m_Faces.push_back({m_Edges[2], m_Edges[6]});
     m_Faces.push_back({m_Edges[3], m_Edges[7]});
     
+    std::lock_guard<std::mutex> lock (m_BlockTypeCubeInfoMutex);
     for (int k = 0; k < 256; k++)
-    {
         for (int i = 0; i < 16; i++)
-        {
             for (int j = 0; j < 16; j++)
-            {
                  m_BlockTypes[i][j][k] = m_Map -> GetBlockTypeAtLocation(m_BackwardLeftPosition.first + i, k, m_BackwardLeftPosition.second + j);
-            }
-        }
-    }
     
     for (int i = m_BackwardLeftPosition.first; i < m_BackwardLeftPosition.first + 16; i++)
-    {
         for (int j = m_BackwardLeftPosition.second; j < m_BackwardLeftPosition.second + 16; j++)
-        {
             for (int k = 0; k < 256; k++)
-            {
-                BlockType type = m_BlockTypes[i - m_BackwardLeftPosition.first][j - m_BackwardLeftPosition.second][k];
-                if (type == BlockType::EMPTY) continue;
-                
-                //deal with Two Tex
-                if (Util::isTwoTex(type))
-                {
-                    Texture* texture = Textures::GetTexture (type, Direction::CENTER);
-
-                    int textureidx = -1;
-                    if (m_NeededTextures.find (texture) != m_NeededTextures.end()) textureidx = m_NeededTextures[texture];
-                    else
-                    {
-                        m_NeededTextures[texture] = (int)m_TextureVector.size();
-                        m_TextureVector.push_back(texture);
-                        textureidx = (int)m_TextureVector.size() - 1;
-                    }
-                    for (int offset1 = 0; offset1 < 2*24; offset1 += 24)
-                    {
-                        for (int l = 0; l < 4; l++)
-                        {
-                            int offset2 = 6*l;
-                            for (int m = 0; m < 6; m++)
-                            {
-                                if (m == 5) m_CubeInfo.push_back(textureidx);
-                                else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
-                                else if (m == 2) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + j);
-                                else if (m == 1) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + k);
-                                else m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + i);
-                            }
-                        }
-                    }
-                    continue;
-                }
-                
-                //deal with cube
-                std::vector <int> v = GetExposedDirectionsOfCube(glm::vec3(i, k, j));
-                for (unsigned int x = 0; x < v.size(); x++)
-                {
-                    Texture* texture = Textures::GetTexture(type, static_cast<Direction>(v[x]));
-                    
-                    int textureidx = -1;
-                    if (m_NeededTextures.find(texture) != m_NeededTextures.end())
-                    {
-                        textureidx = m_NeededTextures [texture];
-                    }
-                    else
-                    {
-                        m_NeededTextures[texture] = (int)m_TextureVector.size();
-                        m_TextureVector.push_back(texture);
-                        textureidx = (int)m_TextureVector.size() - 1;
-                    }
-                    
-                    int offset1 = v[x]*24;
-                    for (int l = 0; l < 4; l++)
-                    {
-                        int offset2 = 6*l;
-                        for (int m = 0; m < 6; m++)
-                        {
-                            if (m == 5) m_CubeInfo.push_back(textureidx);
-                            else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
-                            else if (m == 2) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + j);
-                            else if (m == 1) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + k);
-                            else m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + i);
-                        }
-                    }
-                }
-            }
-        }
-    }
+                CalculateNewMesh(glm::vec3(i, k, j));
 }
 
 bool Chunk::OutOfBound (glm::vec3 position)
@@ -295,5 +219,121 @@ void Chunk::Draw(Camera* camera)
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
 
         s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)loadInfo.size()/24);
+    }
+}
+
+void Chunk::UpdateBlockType(glm::vec3 pos, BlockType type)
+{
+    m_BlockTypeCubeInfoMutex.lock();
+    int x = (int)round(pos.x) - m_BackwardLeftPosition.first;
+    int y = (int)round(pos.y);
+    int z = (int)round(pos.z) - m_BackwardLeftPosition.second;
+    m_BlockTypes[x][z][y] = type;
+    m_BlockTypeCubeInfoMutex.unlock();
+    RecalculateMeshes(pos);
+}
+
+void Chunk::RecalculateMeshes (glm::vec3 pos)
+{
+    m_BlockTypeCubeInfoMutex.lock();
+    DeleteOldMesh(pos);
+    CalculateNewMesh(pos);
+    m_BlockTypeCubeInfoMutex.unlock();
+}
+
+void Chunk::DeleteOldMesh (glm::vec3 pos)
+{
+    std::vector <float> temp;
+    int x = (int)round(pos.x) - m_BackwardLeftPosition.first; int y = (int)round(pos.y); int z = (int)round(pos.z) - m_BackwardLeftPosition.second;
+    if (m_CubeInfoLookup.find({{x, y}, z}) == m_CubeInfoLookup.end()) return;
+    std::pair <int, int> info = m_CubeInfoLookup[{{x, y}, z}];
+    for (int i = 0; i < info.first; i++) temp.push_back(m_CubeInfo[i]);
+    for (int i = info.first + info.second; i < m_CubeInfo.size(); i++) temp.push_back(m_CubeInfo[i]);
+    m_CubeInfo.clear();
+    for (int i = 0; i < (int)temp.size(); i++) m_CubeInfo.push_back(temp[i]);
+    m_CubeInfoLookup.erase({{x, y}, z});
+    for (auto& each : m_CubeInfoLookup)
+    {
+        if (each.second.first > info.first) each.second.first -= info.second;
+    }
+}
+
+void Chunk::CalculateNewMesh (glm::vec3 pos)
+{
+    int i = (int)round(pos.x);
+    int k = (int)round(pos.y);
+    int j = (int)round(pos.z);
+    BlockType type = m_BlockTypes[i - m_BackwardLeftPosition.first][j - m_BackwardLeftPosition.second][k];
+    if (type == BlockType::EMPTY) return;
+    
+    //deal with Two Tex
+    if (Util::isTwoTex(type))
+    {
+        Texture* texture = Textures::GetTexture (type, Direction::CENTER);
+
+        int textureidx = -1;
+        if (m_NeededTextures.find (texture) != m_NeededTextures.end()) textureidx = m_NeededTextures[texture];
+        else
+        {
+            m_NeededTextures[texture] = (int)m_TextureVector.size();
+            m_TextureVector.push_back(texture);
+            textureidx = (int)m_TextureVector.size() - 1;
+        }
+        
+        int startidx = (int)m_CubeInfo.size();
+        int length = 48;
+        m_CubeInfoLookup [{{i - m_BackwardLeftPosition.first, k}, j - m_BackwardLeftPosition.second}] = {startidx, length};
+        for (int offset1 = 0; offset1 < 2*24; offset1 += 24)
+        {
+            for (int l = 0; l < 4; l++)
+            {
+                int offset2 = 6*l;
+                for (int m = 0; m < 6; m++)
+                {
+                    if (m == 5) m_CubeInfo.push_back(textureidx);
+                    else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m]);
+                    else if (m == 2) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + j);
+                    else if (m == 1) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + k);
+                    else m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + i);
+                }
+            }
+        }
+        return;
+    }
+    
+    //deal with cube
+    std::vector <int> v = GetExposedDirectionsOfCube(glm::vec3(i, k, j));
+    int startidx = (int)m_CubeInfo.size();
+    int length = int(v.size())*24;
+    m_CubeInfoLookup [{{i - m_BackwardLeftPosition.first, k}, j - m_BackwardLeftPosition.second}] = {startidx, length};
+    for (unsigned int x = 0; x < v.size(); x++)
+    {
+        Texture* texture = Textures::GetTexture(type, static_cast<Direction>(v[x]));
+        
+        int textureidx = -1;
+        if (m_NeededTextures.find(texture) != m_NeededTextures.end())
+        {
+            textureidx = m_NeededTextures [texture];
+        }
+        else
+        {
+            m_NeededTextures[texture] = (int)m_TextureVector.size();
+            m_TextureVector.push_back(texture);
+            textureidx = (int)m_TextureVector.size() - 1;
+        }
+        
+        int offset1 = v[x]*24;
+        for (int l = 0; l < 4; l++)
+        {
+            int offset2 = 6*l;
+            for (int m = 0; m < 6; m++)
+            {
+                if (m == 5) m_CubeInfo.push_back(textureidx);
+                else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
+                else if (m == 2) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + j);
+                else if (m == 1) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + k);
+                else m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + i);
+            }
+        }
     }
 }

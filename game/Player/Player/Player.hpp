@@ -8,6 +8,8 @@
 #include "VertexBuffer.hpp"
 #include "Renderer.hpp"
 #include "Shader.hpp"
+#include "SceneRenderer.hpp"
+#include "Inventory.hpp"
 #include "IndexBuffer.hpp"
 #include "VertexBufferLayout.hpp"
 
@@ -40,6 +42,7 @@ private:
     bool m_JumpReset;
     std::set <Direction> m_ActiveDirections;
     Listener <GLFWwindow*, int, int, int, int> m_KeyboardInputListener;
+    Listener <GLFWwindow*, int, int, int> m_MouseButtonInputListener;
     MovementState m_MovementState;
     
     void ProcessCollision (glm::vec3 dir, float distance, glm::vec3 gravitydisplacement);
@@ -48,8 +51,9 @@ private:
     
     void Move(glm::vec3 dir, float distance, glm::vec3 gravitydisplacement);
     void KeyboardInput (GLFWwindow* window, int key, int scancode, int action, int mods);
+    void MouseButtonInput (GLFWwindow* window, int button, int action, int mods);
     void UpdateMovementInfo(Direction dir, bool active);
-    std::pair <glm::vec3, BlockType> GetRayCastTarget();
+    std::pair <glm::vec3, std::pair <BlockType, Direction>> GetRayCastTarget();
     glm::vec3 GetMovementDirection ();
 
     void CheckJump();
@@ -59,6 +63,13 @@ private:
     //gravity
     bool m_GravityOn;
     glm::vec3 m_GravityDownVelocity;
+    
+    //inventory
+    Inventory m_Inventory;
+    SceneRenderer* m_SceneRenderer;
+    std::pair <glm::vec3, std::pair <BlockType, Direction>> m_CurrTarget;
+    void BreakBlock (std::pair <glm::vec3, std::pair <BlockType, Direction>> target);
+    void PlaceBlock (std::pair <glm::vec3, std::pair <BlockType, Direction>> target);
     
 public:
     static void Init();
@@ -71,7 +82,9 @@ public:
     void SetState(MovementState state);
     void SetSpeed(float speed);
     void SetPosition(glm::vec3 position);
+    void SetSceneRenderer (SceneRenderer* renderer) {m_SceneRenderer = renderer;}
     glm::vec3 GetPosition ();
     void Update();
     void Start();
 };
+

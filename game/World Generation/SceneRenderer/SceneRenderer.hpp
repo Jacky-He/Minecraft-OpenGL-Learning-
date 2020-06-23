@@ -9,8 +9,8 @@ private:
     Camera* camera;
     
     int m_Radius;
-    std::set <Chunk*> m_Chunks;
-    std::set <std::pair <int, int>> m_ChunkCoords;
+    
+    std::map <std::pair <int, int>, Chunk*> m_Chunks;
     
     std::queue <Chunk*> m_DeleteQueue;
     std::mutex m_DeleteQueueMutex;
@@ -31,4 +31,5 @@ public:
     ~SceneRenderer();
     void Render();
     void SetCamera(Camera* camera);
+    void UpdateBlockAtLocation (glm::vec3 pos, BlockType type);
 };

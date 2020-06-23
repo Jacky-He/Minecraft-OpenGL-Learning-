@@ -9,7 +9,7 @@
 #include "Input.hpp"
 #include "Map.hpp"
 
-SceneRenderer::SceneRenderer(int radius):m_Radius(radius), m_Chunks(), m_ChunkCoords(), m_DeleteQueue()
+SceneRenderer::SceneRenderer(int radius):m_Radius(radius), m_Chunks(), m_DeleteQueue()
 {
     camera = nullptr;
     glEnable (GL_BLEND);
@@ -24,8 +24,7 @@ SceneRenderer::~SceneRenderer()
 void SceneRenderer::InitChunk(std::pair <int, int> position)
 {
     Chunk* c = new Chunk(position);
-    m_Chunks.insert(c);
-    m_ChunkCoords.insert(position);
+    m_Chunks.insert(std::pair <std::pair <int, int>, Chunk*> (position, c));
     c -> Init();
 }
 
@@ -46,10 +45,9 @@ void SceneRenderer::UpdateChunks()
     
     //delete chunks
     std::vector <Chunk*> trash;
-    for (Chunk* each: m_Chunks)
+    for (auto const& each : m_Chunks)
     {
-        std::pair <int, int> pos = each -> GetPosition();
-        if (OutOfBound(pos)) trash.push_back(each);
+        if (OutOfBound(each.first)) trash.push_back(each.second);
     }
     
     while (!trash.empty())
@@ -57,8 +55,7 @@ void SceneRenderer::UpdateChunks()
         Chunk* temp = trash.back();
         trash.pop_back();
         std::pair <int, int> temppos = temp -> GetPosition();
-        m_ChunkCoords.erase(temppos);
-        m_Chunks.erase(temp);
+        m_Chunks.erase(temppos);
         m_DeleteQueue.push(temp);
     }
     
@@ -74,7 +71,7 @@ void SceneRenderer::UpdateChunks()
             int targetz = campos.second + z;
             targetx = targetx/16*16;
             targetz = targetz/16*16;
-            if (m_ChunkCoords.find({targetx, targetz}) == m_ChunkCoords.end())
+            if (m_Chunks.find({targetx, targetz}) == m_Chunks.end())
             {
                 std::pair <int, int> pp = {targetx, targetz};
                 v.push_back(pp);
@@ -93,10 +90,10 @@ bool SceneRenderer::OutOfBound(std::pair <int, int> position)
 
 void SceneRenderer::DrawChunks()
 {
-    for (Chunk* each : m_Chunks)
+    for (auto const& each : m_Chunks)
     {
         //check if in view, better solution uses bounding volume hierarchy (checking intersection kinda expensive) (maybe later)
-        if (InView (each)) each -> Draw(camera);
+        if (InView(each.second)) each.second -> Draw(camera);
     }
 }
 
@@ -142,4 +139,20 @@ void SceneRenderer::Render()
 void SceneRenderer::SetCamera(Camera* camera)
 {
     this -> camera = camera;
+}
+
+void SceneRenderer::UpdateBlockAtLocation(glm::vec3 pos, BlockType type)
+{
+    std::pair <int, int> chunkpos = Chunk::GetChunkPositionAt(pos);
+    if (m_Chunks.find(chunkpos) == m_Chunks.end()) return; //don't really need to update it since it's not loaded
+    Chunk* c = m_Chunks[chunkpos];
+    c -> UpdateBlockType(pos, type);
+    for (int i = 0; i < 6; i++)
+    {
+        glm::vec3 check = Util::s_DirectionsUnitVectors [i] + pos;
+        std::pair <int, int> checkcpos = Chunk::GetChunkPositionAt(check);
+        if (m_Chunks.find(checkcpos) == m_Chunks.end()) continue; //again, not loaded
+        Chunk* checkc = m_Chunks[checkcpos];
+        checkc -> RecalculateMeshes(check);
+    }
 }

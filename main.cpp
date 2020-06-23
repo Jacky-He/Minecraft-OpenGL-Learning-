@@ -69,6 +69,7 @@ int main ()
     player -> Start();
     SceneRenderer* renderer = new SceneRenderer(128);
     renderer -> SetCamera(player -> m_FirstPersonCamera);
+    player -> SetSceneRenderer (renderer);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

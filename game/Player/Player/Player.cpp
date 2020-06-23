@@ -12,11 +12,13 @@ std::unique_ptr<Renderer> Player::s_Renderer = nullptr;
 std::unique_ptr<Shader> Player::s_Shader = nullptr;
 std::unique_ptr<IndexBuffer> Player::s_IBO = nullptr;
 
-Player::Player(const std::string& name, glm::vec3 position):m_Name(), m_Position(position), m_MovementState(MovementState::WALKING), m_GravityDownVelocity(glm::zero<glm::vec3>()), m_JumpReset(false), m_SpacePressed(false)
+Player::Player(const std::string& name, glm::vec3 position):m_Name(), m_Position(position), m_MovementState(MovementState::WALKING), m_GravityDownVelocity(glm::zero<glm::vec3>()), m_JumpReset(false), m_SpacePressed(false), m_Inventory(10)
 {
     using namespace std::placeholders;
-    std::function<void(GLFWwindow*, int, int, int, int)> f = std::bind(&Player::KeyboardInput, this, _1, _2, _3, _4, _5);
-    m_KeyboardInputListener = Input::addKeyboardInputListener(this, f);
+    std::function<void(GLFWwindow*, int, int, int, int)> f1 = std::bind(&Player::KeyboardInput, this, _1, _2, _3, _4, _5);
+    m_KeyboardInputListener = Input::addKeyboardInputListener(this, f1);
+    std::function<void(GLFWwindow*, int, int, int)> f2 = std::bind(&Player::MouseButtonInput, this, _1, _2, _3, _4);
+    m_MouseButtonInputListener = Input::addMouseButtonListener(this, f2);
     
     m_FirstPersonCamera = new Camera(position + glm::vec3(0, s_EyeLevel - s_Height/2.0f, 0));
     SetState(m_MovementState);
@@ -27,6 +29,7 @@ Player::~Player()
 {
     delete m_FirstPersonCamera;
     m_KeyboardInputListener.Remove();
+    m_MouseButtonInputListener.Remove();
     m_ActiveDirections.clear();
 }
 
@@ -81,8 +84,9 @@ void Player::Update()
     Move(GetMovementDirection(), m_DeltaDistance*m_Moving, m_GravityDownVelocity*(float)Constants::deltaTime);
     m_FirstPersonCamera -> Update();
     
-    std::pair <glm::vec3, BlockType> target = GetRayCastTarget();
-    if (target.second != BlockType::EMPTY) HighLightHitElement(target.first);
+    std::pair <glm::vec3, std::pair <BlockType, Direction>> target = GetRayCastTarget();
+    m_CurrTarget = target;
+    if (target.second.first != BlockType::EMPTY) HighLightHitElement(target.first);
 }
 
 void Player::SetSpeed(float speed)
@@ -268,7 +272,7 @@ void Player::CheckJump()
     }
 }
 
-std::pair <glm::vec3, BlockType> Player::GetRayCastTarget()
+std::pair <glm::vec3, std::pair <BlockType, Direction>> Player::GetRayCastTarget()
 {
     glm::vec3 dir = glm::normalize(m_FirstPersonCamera -> GetDirection());
     glm::vec3 pos = m_FirstPersonCamera -> GetPosition();
@@ -281,11 +285,36 @@ std::pair <glm::vec3, BlockType> Player::GetRayCastTarget()
         if (i == 0 || curr != prev)
         {
             BlockType type = m_Map -> GetBlockTypeAtLocation(curr.x, curr.y, curr.z);
-            if (Util::isBreakable(type)) return {curr, type};
+            if (Util::isBreakable(type))
+            {
+                Direction res = Direction::CENTER;
+                float mindis = std::numeric_limits<float>::infinity();
+                for (int i = 0; i < 6; i++)
+                {
+                    glm::vec3 duv = Util::s_DirectionsUnitVectors[i];
+                    float temp = glm::dot (glm::vec3 (abs(duv.x), abs(duv.y), abs(duv.z)), curr);
+                    float temp2 = glm::dot(duv, glm::vec3 (0.5f, 0.5f, 0.5f));
+                    glm::vec4 plane = glm::vec4(abs(duv.x), abs(duv.y), abs(duv.z), -(temp + temp2));
+                    float temp3 = glm::dot(plane, glm::vec4 (dir, 0));
+                    if (temp3 == 0.0f) break;
+                    float t = -glm::dot(plane, glm::vec4 (pos, 1))/temp3;
+                    glm::vec3 inter = pos + t*dir;
+                    float dis = glm::distance(inter, pos);
+                    if (inter.x >= curr.x - 0.501f && inter.x <= curr.x + 0.501f && inter.y >= curr.y - 0.501f && inter.y <= curr.y + 0.501f && inter.z >= curr.z - 0.501f && inter.z <= curr.z + 0.501f)
+                    {
+                        if (dis < mindis)
+                        {
+                            mindis = dis;
+                            res = static_cast<Direction>(i);
+                        }
+                    }
+                }
+                return {curr, {type, res}};
+            }
         }
         prev = curr;
     }
-    return {glm::zero<glm::vec3>(), BlockType::EMPTY};
+    return {glm::zero<glm::vec3>(), {BlockType::EMPTY, Direction::CENTER}};
 }
 
 void Player::HighLightHitElement(glm::vec3 pos)
@@ -294,9 +323,6 @@ void Player::HighLightHitElement(glm::vec3 pos)
     for (int offset = 0; offset < 384; offset += 4)
     {
         glm::vec4 tpos = glm::vec4(Constants::cubeOutLineModel[offset], Constants::cubeOutLineModel[offset + 1], Constants::cubeOutLineModel[offset + 2], Constants::cubeOutLineModel[offset + 3]);
-//        tpos.x += (tpos.x > 0 ? 0.002 : -0.002);
-//        tpos.y += (tpos.y > 0 ? 0.002 : -0.002);
-//        tpos.z += (tpos.z > 0 ? 0.002 : -0.002);
         tpos += glm::vec4(pos, 0);
         data[offset] = tpos.x;
         data[offset + 1] = tpos.y;
@@ -306,5 +332,38 @@ void Player::HighLightHitElement(glm::vec3 pos)
     s_Shader -> SetUniformMat4f("u_MVP", m_FirstPersonCamera -> GetPVMatrix());
     s_VBO -> SetData(data, sizeof(data));
     s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader);
-//    s_Renderer -> DrawLines(*s_VAO, *s_Shader, 96/4);
+}
+
+void Player::MouseButtonInput (GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) BreakBlock (m_CurrTarget);
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) PlaceBlock (m_CurrTarget);
+}
+
+void Player::BreakBlock (std::pair <glm::vec3, std::pair <BlockType, Direction>> target)
+{
+    if (target.second.first == BlockType::EMPTY) return;
+    m_Inventory.AddItem(ItemType::Block, static_cast<int>(target.second.first), 1);
+    Map::s_Mutex.lock();
+    m_Map -> SetBlockTypeAtLocation((int)round(target.first.x), (int)round(target.first.y), (int)round(target.first.z), BlockType::EMPTY);
+    Map::s_Mutex.unlock();
+    m_SceneRenderer -> UpdateBlockAtLocation (target.first, BlockType::EMPTY);
+}
+
+void Player::PlaceBlock (std::pair <glm::vec3, std::pair <BlockType, Direction>> target)
+{
+    if (target.second.first == BlockType::EMPTY) return;
+    //get selected block in inventory
+    Item* item = m_Inventory.GetCurrItem();
+    if (item == nullptr) return;
+    ItemType type = item -> GetType(); int enumidx = item -> GetEnumIdx();
+    if (type != ItemType::Block) return;
+    m_Inventory.RemoveItem(type, enumidx, 1);
+    //now item might be null, so avoid using item
+    int diridx = static_cast<int>(target.second.second);
+    glm::vec3 tarpos = target.first + Util::s_DirectionsUnitVectors[diridx];
+    Map::s_Mutex.lock();
+    m_Map -> SetBlockTypeAtLocation((int)round(tarpos.x), (int)round(tarpos.y), (int)round(tarpos.z), static_cast<BlockType>(enumidx));
+    Map::s_Mutex.unlock();
+    m_SceneRenderer -> UpdateBlockAtLocation(tarpos, static_cast<BlockType>(enumidx));
 }

@@ -6,7 +6,7 @@ std::map <std::pair <std::pair <int, int>, int>, BlockType> Map::s_Lookup = std:
 int Map::s_CurrSeed = 1;
 Noise* Map::s_NoiseFunction = nullptr;
 
-Map::Map()
+Map::Map():m_HeightMapLimits(2000)
 {
     if (s_NoiseFunction == nullptr) s_NoiseFunction = new Noise(s_CurrSeed);
 }
@@ -23,7 +23,9 @@ void Map::SetCurrSeed(int seed)
 
 double Map::GetHeightAtLocation (int x, int y, int z)
 {
+    if (m_HeightMap.find({x, z}) != m_HeightMap.end()) return m_HeightMap[{x, z}];
     Biome biome = GetBiome(x, y, z);
+    double res = 0;
     switch (biome)
     {
         case Biome::PLAIN:
@@ -32,7 +34,8 @@ double Map::GetHeightAtLocation (int x, int y, int z)
             double xt = x*0.005;
             double zt = z*0.005;
             double noise = 2*(s_NoiseFunction -> GenNoise(14*xt, 0, 14*zt)) + 3*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 4*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5));
-            return noise + baseheight;
+            res = noise + baseheight;
+            break;
         }
         case Biome::FOREST:
         {
@@ -42,18 +45,29 @@ double Map::GetHeightAtLocation (int x, int y, int z)
             double noise = 15*(s_NoiseFunction -> GenNoise(3*xt, 0, 3*zt)) + 30*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 5*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5)) + 15*(s_NoiseFunction -> GenNoise(2*xt, 0, 2*zt));
             noise = noise/65;
             noise = pow(noise, 3);
-            return noise*70 + baseheight;
+            res = noise*70 + baseheight;
+            break;
         }
-        default: return 0;
+        default:
+            res = 0;
+            break;
     }
+    if (m_HeightMapOrder.size() >= m_HeightMapLimits)
+    {
+        m_HeightMap.erase(m_HeightMapOrder.front());
+        m_HeightMapOrder.pop_front();
+    }
+    m_HeightMap [{x, z}] = res;
+    m_HeightMapOrder.push_back({x, z});
+    return res;
 }
 
 std::pair <int, int> Map::GetChunkPositionAt (glm::vec3 position)
 {
     if (position.x >= 0) position.x = int(position.x)/16*16;
-    else position.x = (int(position.x)/16 - 1)*16;
+    else position.x = ((int(position.x) + 1)/16 - 1)*16;
     if (position.z >= 0) position.z = int(position.z)/16*16;
-    else position.z = (int(position.z)/16 - 1)*16;
+    else position.z = ((int(position.z) + 1)/16 - 1)*16;
     return {position.x, position.z};
 }
 
@@ -76,6 +90,7 @@ int Map::InterpolateHeightAtLocation (int x, int y, int z)
 BlockType Map::GetBlockTypeAtLocation (int x, int y, int z)
 {
     if (s_Lookup.find({{x, y}, z}) != s_Lookup.end()) return s_Lookup[{{x, y}, z}];
+//    int height = (int)round(GetHeightAtLocation(x, y, z));
     int height = (int)round(InterpolateHeightAtLocation(x, y, z));
     Biome biome = GetBiome(x, y, z);
     switch (biome)

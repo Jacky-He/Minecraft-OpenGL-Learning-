@@ -9,6 +9,7 @@ double Input::xOffset = 0;
 double Input::yOffset = 0;
 
 Event <GLFWwindow*, int, int, int, int> Input::keyboardInputEvent = Event <GLFWwindow*, int, int, int, int>();
+Event <GLFWwindow*, int, int, int> Input::mouseButtonEvent = Event <GLFWwindow*, int, int, int> ();
 
 std::unique_ptr<VertexArray> Input::s_VAO = nullptr;
 std::unique_ptr<VertexBuffer> Input::s_VBO = nullptr;
@@ -80,7 +81,7 @@ void Input::cursorEnterCallback(GLFWwindow* window, int entered)
 
 void Input::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    
+    mouseButtonEvent.Trigger(window, button, action, mods);
 }
 
 void Input::scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
@@ -101,6 +102,11 @@ void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, i
 Listener<GLFWwindow*, int, int, int, int> Input::addKeyboardInputListener(void* obj, const std::function<void(GLFWwindow*, int, int, int, int)>& listener)
 {
     return keyboardInputEvent.AddEventListener(obj, listener);
+}
+
+ Listener<GLFWwindow*, int, int, int> Input::addMouseButtonListener(void* obj, const std::function<void(GLFWwindow*, int, int, int)>& listener)
+{
+    return mouseButtonEvent.AddEventListener(obj, listener);
 }
 
 void Input::DrawCrossHair ()

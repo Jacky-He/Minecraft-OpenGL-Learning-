@@ -19,7 +19,9 @@ public:
     static double xOffset;
     static double yOffset;
     static Listener<GLFWwindow*, int, int, int, int> addKeyboardInputListener(void* obj, const std::function<void(GLFWwindow* window, int key, int scancode, int action, int mods)>& listener);
+    static Listener<GLFWwindow*, int, int, int> addMouseButtonListener(void* obj, const std::function<void(GLFWwindow*, int, int, int)>& listener);
     static Event <GLFWwindow*, int, int, int, int> keyboardInputEvent;
+    static Event <GLFWwindow*, int, int, int> mouseButtonEvent;
     
     //cross hair
     static std::unique_ptr<VertexArray> s_VAO;
