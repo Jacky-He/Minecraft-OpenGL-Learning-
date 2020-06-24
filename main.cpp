@@ -6,6 +6,7 @@
 #include "Input.hpp"
 #include "Constants.hpp"
 #include "Textures.hpp"
+#include "Constellations.hpp"
 #include "Map.hpp"
 #include "Chunk.hpp"
 #include "Player.hpp"
@@ -70,6 +71,7 @@ int main ()
     SceneRenderer* renderer = new SceneRenderer(128);
     renderer -> SetCamera(player -> m_FirstPersonCamera);
     player -> SetSceneRenderer (renderer);
+    renderer -> SetConstellations (new Constellations(20));
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -80,12 +82,10 @@ int main ()
         double timeCurr = glfwGetTime(); //in seconds
         Constants::deltaTime = timeCurr - timeFromStart;
         timeFromStart = timeCurr;
-        GLCall(glClearColor(124/255.05,204/255.0,239/255.0, 1.0));
-        GLCall(glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
         
 //        GameControl::sharedInstance().Update();
-        player -> Update();
         renderer -> Render();
+        player -> Update();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

@@ -10,6 +10,7 @@
 #include "Camera.hpp"
 #include "Renderer.hpp"
 #include "Map.hpp"
+#include "Light.hpp"
 
 class Chunk //16 x 16 x 256
 {
@@ -49,6 +50,7 @@ private:
 public:
     static void SetUp();
     static std::pair <int, int> GetChunkPositionAt (glm::vec3 position);
+    static void SetLightSources(const std::vector <Light>& lightsources);
     
     void Init();
     void Draw(Camera* camera);

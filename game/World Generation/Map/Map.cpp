@@ -33,7 +33,7 @@ double Map::GetHeightAtLocation (int x, int y, int z)
             int baseheight = 63;
             double xt = x*0.005;
             double zt = z*0.005;
-            double noise = 2*(s_NoiseFunction -> GenNoise(14*xt, 0, 14*zt)) + 3*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 4*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5));
+            double noise = 5*(s_NoiseFunction -> GenNoise(14*xt, 0, 14*zt)) + 4*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5));
             res = noise + baseheight;
             break;
         }
@@ -42,7 +42,7 @@ double Map::GetHeightAtLocation (int x, int y, int z)
             int baseheight = 63;
             double xt = x*0.01;
             double zt = z*0.01;
-            double noise = 15*(s_NoiseFunction -> GenNoise(3*xt, 0, 3*zt)) + 30*(s_NoiseFunction -> GenNoise(xt, 0, zt)) + 5*(s_NoiseFunction -> GenNoise(xt*5, 0, zt*5)) + 15*(s_NoiseFunction -> GenNoise(2*xt, 0, 2*zt));
+            double noise = 20*(s_NoiseFunction -> GenNoise(3*xt, 0, 3*zt)) + 45*(s_NoiseFunction -> GenNoise(2*xt, 0, 2*zt));
             noise = noise/65;
             noise = pow(noise, 3);
             res = noise*70 + baseheight;
@@ -90,7 +90,6 @@ int Map::InterpolateHeightAtLocation (int x, int y, int z)
 BlockType Map::GetBlockTypeAtLocation (int x, int y, int z)
 {
     if (s_Lookup.find({{x, y}, z}) != s_Lookup.end()) return s_Lookup[{{x, y}, z}];
-//    int height = (int)round(GetHeightAtLocation(x, y, z));
     int height = (int)round(InterpolateHeightAtLocation(x, y, z));
     Biome biome = GetBiome(x, y, z);
     switch (biome)

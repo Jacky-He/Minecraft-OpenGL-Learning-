@@ -17,6 +17,7 @@
 #include <future>
 #include <ctime>
 #include <mutex>
+#include <math.h>
 #include <numeric>
 #include <time.h>
 #include <random>

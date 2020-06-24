@@ -32,18 +32,33 @@ std::vector <glm::vec3> Chunk::GetChunkVertices ()
     return m_Vertices;
 }
 
+void Chunk::SetLightSources(const std::vector <Light>& lightsources)
+{
+    for (int i = 0; i < lightsources.size(); i++)
+    {
+        if (lightsources[i].type == LightSourceType::DIRECTIONAL)
+        {
+            s_Shader -> SetUniform3f("u_DirLight.direction", lightsources[i].dir.x, lightsources[i].dir.y, lightsources[i].dir.z);
+            s_Shader -> SetUniform3f("u_DirLight.ambient", lightsources[i].ambient.x, lightsources[i].ambient.y, lightsources[i].ambient.z);
+            s_Shader -> SetUniform3f("u_DirLight.diffuse", lightsources[i].diffuse.x, lightsources[i].diffuse.y, lightsources[i].diffuse.z);
+            return;
+        }
+    }
+}
+
 void Chunk::SetUp()
 {
     s_VAO = std::make_unique<VertexArray>();
-    s_VBO = std::make_unique<VertexBuffer>(nullptr, sizeof(float)*144*16*16*256, GL_DYNAMIC_DRAW);
+    s_VBO = std::make_unique<VertexBuffer>(nullptr, sizeof(float)*216*16*16*256, GL_DYNAMIC_DRAW);
     s_IBO = std::make_unique<IndexBuffer> (nullptr, 36*16*16*256, GL_DYNAMIC_DRAW);
-    s_Shader = std::make_unique<Shader>("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/cube.shader");
+    s_Shader = std::make_unique<Shader>("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/quad.shader");
     s_Renderer = std::make_unique<Renderer> ();
     
     VertexBufferLayout layout;
-    layout.Push<float>(3);
-    layout.Push<float>(2);
-    layout.Push<float>(1);
+    layout.Push<float>(3); //x, y, z
+    layout.Push<float>(2); //tex coords
+    layout.Push<float>(1); //tex idx
+    layout.Push<float>(3); //nx, ny, nz
     s_VAO -> AddBuffer(*s_VBO, layout);
 
     GLCall(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &s_MaxTextureUnits));
@@ -177,7 +192,7 @@ void Chunk::Draw(Camera* camera)
         glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
 
-        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)m_CubeInfo.size()/24);
+        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)m_CubeInfo.size()/36);
         return;
     }
     
@@ -193,7 +208,7 @@ void Chunk::Draw(Camera* camera)
         int texturecnt = 0;
         while (texturecnt < s_MaxTextureUnits && curr < (int)m_CubeInfo.size())
         {
-            int texid = (int)std::round(m_CubeInfo[curr + 23]);
+            int texid = (int)std::round(m_CubeInfo[curr + 35]);
             if (selectedTextures.find(texid) == selectedTextures.end())
             {
                 texturecnt++;
@@ -204,13 +219,13 @@ void Chunk::Draw(Camera* camera)
             }
             for (int i = 0; i < 4; i++)
             {
-                for (int j = 0; j < 6; j++)
+                for (int j = 0; j < 9; j++)
                 {
                     if (j == 6) loadInfo.push_back(lookup[texid]);
                     else loadInfo.push_back(m_CubeInfo[curr + i*6 + j]);
                 }
             }
-            curr += 24;
+            curr += 36;
         }
         for (int i = 0; i < textures.size(); i++) textures[i] -> Bind(i);
         s_VBO -> SetData(&loadInfo[0], sizeof(float)*(int)loadInfo.size());
@@ -218,7 +233,7 @@ void Chunk::Draw(Camera* camera)
         glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
         s_Shader -> SetUniformMat4f("u_MVP", camera->GetPVMatrix()*model);
 
-        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)loadInfo.size()/24);
+        s_Renderer -> Draw(*s_VAO, *s_IBO, *s_Shader, 6*(int)loadInfo.size()/36);
     }
 }
 
@@ -281,16 +296,17 @@ void Chunk::CalculateNewMesh (glm::vec3 pos)
         }
         
         int startidx = (int)m_CubeInfo.size();
-        int length = 48;
+        int length = 72;
         m_CubeInfoLookup [{{i - m_BackwardLeftPosition.first, k}, j - m_BackwardLeftPosition.second}] = {startidx, length};
-        for (int offset1 = 0; offset1 < 2*24; offset1 += 24)
+        for (int offset1 = 0; offset1 < 2*36; offset1 += 36)
         {
             for (int l = 0; l < 4; l++)
             {
-                int offset2 = 6*l;
-                for (int m = 0; m < 6; m++)
+                int offset2 = 9*l;
+                for (int m = 0; m < 9; m++)
                 {
-                    if (m == 5) m_CubeInfo.push_back(textureidx);
+                    if (m >= 6) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m]);
+                    else if (m == 5) m_CubeInfo.push_back(textureidx);
                     else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m]);
                     else if (m == 2) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + j);
                     else if (m == 1) m_CubeInfo.push_back(Constants::twoTexModel[offset1 + offset2 + m] + k);
@@ -304,7 +320,7 @@ void Chunk::CalculateNewMesh (glm::vec3 pos)
     //deal with cube
     std::vector <int> v = GetExposedDirectionsOfCube(glm::vec3(i, k, j));
     int startidx = (int)m_CubeInfo.size();
-    int length = int(v.size())*24;
+    int length = int(v.size())*36;
     m_CubeInfoLookup [{{i - m_BackwardLeftPosition.first, k}, j - m_BackwardLeftPosition.second}] = {startidx, length};
     for (unsigned int x = 0; x < v.size(); x++)
     {
@@ -322,13 +338,14 @@ void Chunk::CalculateNewMesh (glm::vec3 pos)
             textureidx = (int)m_TextureVector.size() - 1;
         }
         
-        int offset1 = v[x]*24;
+        int offset1 = v[x]*36;
         for (int l = 0; l < 4; l++)
         {
-            int offset2 = 6*l;
-            for (int m = 0; m < 6; m++)
+            int offset2 = 9*l;
+            for (int m = 0; m < 9; m++)
             {
-                if (m == 5) m_CubeInfo.push_back(textureidx);
+                if (m >= 6) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
+                else if (m == 5) m_CubeInfo.push_back(textureidx);
                 else if (m == 3 || m == 4) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m]);
                 else if (m == 2) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + j);
                 else if (m == 1) m_CubeInfo.push_back(Constants::cubeModel[offset1 + offset2 + m] + k);

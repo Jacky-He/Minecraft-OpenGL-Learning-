@@ -7,6 +7,8 @@ double Input::xPos = 0;
 double Input::yPos = 0;
 double Input::xOffset = 0;
 double Input::yOffset = 0;
+double Input::lastyPosMin = 0;
+double Input::lastyPosMax = 0;
 
 Event <GLFWwindow*, int, int, int, int> Input::keyboardInputEvent = Event <GLFWwindow*, int, int, int, int>();
 Event <GLFWwindow*, int, int, int> Input::mouseButtonEvent = Event <GLFWwindow*, int, int, int> ();
@@ -46,7 +48,7 @@ void Input::Init (GLFWwindow* window)
     s_VAO = std::make_unique<VertexArray> ();
     s_VBO = std::make_unique<VertexBuffer>(s_CrossHairVertexPositions, sizeof(s_CrossHairVertexPositions), GL_STATIC_DRAW);
     s_IBO = std::make_unique<IndexBuffer>(s_CrossHairVertexIndices, 6, GL_STATIC_DRAW);
-    s_Shader = std::make_unique<Shader>("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/cube.shader");
+    s_Shader = std::make_unique<Shader>("/Users/jackyhe/Desktop/DEV/Open GL/Minecraft/Minecraft/res/shaders/nolightingquad.shader");
     s_Renderer = std::make_unique<Renderer>();
     
     VertexBufferLayout layout;
@@ -59,16 +61,33 @@ void Input::Init (GLFWwindow* window)
     s_Shader -> SetUniformiv("u_Textures", arr, 1);
     glm::mat4 proj = glm::ortho(-Constants::screenWidth/2.0f, Constants::screenWidth/2.0f, -Constants::screenHeight/2.0f, Constants::screenHeight/2.0f, -1.0f, 1.0f);
     s_Shader -> SetUniformMat4f("u_MVP", proj);
+    
+    lastyPosMax = Constants::screenHeight;
+    lastyPosMin = 0.0;
 }
 
 void Input::cursorPositionCallback (GLFWwindow* window, double xPos, double yPos)
 {
     if (!Input::mouseInside) return;
     //clamp xpos and ypos
-    
     Input::xPos = xPos;
-    Input::yPos = std::max(std::min(yPos, double(Constants::screenHeight)), 0.0);
-    
+    if (yPos >= lastyPosMax)
+    {
+        Input::yPos = Constants::screenHeight;
+        lastyPosMax = yPos;
+        lastyPosMin = lastyPosMax - Constants::screenHeight;
+    }
+    else if (yPos <= lastyPosMin)
+    {
+        Input::yPos = 0;
+        lastyPosMin = yPos;
+        lastyPosMax = lastyPosMin + Constants::screenHeight;
+    }
+    else
+    {
+        Input::yPos = yPos - lastyPosMin;
+    }
+        
     //use only if want to mod this, kinda costly
 //    double mod = double(Constants::screenWidth);
 //    Input::xPos = std::fmod(std::fmod(xPos, mod) + mod, mod);

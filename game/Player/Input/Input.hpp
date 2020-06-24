@@ -16,6 +16,8 @@ public:
     static bool mouseInside;
     static double xPos;
     static double yPos;
+    static double lastyPosMin;
+    static double lastyPosMax;
     static double xOffset;
     static double yOffset;
     static Listener<GLFWwindow*, int, int, int, int> addKeyboardInputListener(void* obj, const std::function<void(GLFWwindow* window, int key, int scancode, int action, int mods)>& listener);

@@ -39,6 +39,11 @@ void SceneRenderer::DeleteChunks()
     }
 }
 
+void SceneRenderer::UpdateConstellations()
+{
+    m_LightSources.push_back(m_Constellations -> Update());
+}
+
 void SceneRenderer::UpdateChunks()
 {
     std::pair <int, int> campos = Chunk::GetChunkPositionAt(camera -> GetPosition());
@@ -90,6 +95,7 @@ bool SceneRenderer::OutOfBound(std::pair <int, int> position)
 
 void SceneRenderer::DrawChunks()
 {
+    Chunk::SetLightSources(m_LightSources);
     for (auto const& each : m_Chunks)
     {
         //check if in view, better solution uses bounding volume hierarchy (checking intersection kinda expensive) (maybe later)
@@ -127,6 +133,8 @@ bool SceneRenderer::SameSideAsPlaneNormal (glm::vec4 plane, glm::vec4 point)
 
 void SceneRenderer::Render()
 {
+    m_LightSources.clear();
+    UpdateConstellations();
     UpdateChunks();
     DrawChunks();
     Input::DrawCrossHair();
@@ -139,6 +147,12 @@ void SceneRenderer::Render()
 void SceneRenderer::SetCamera(Camera* camera)
 {
     this -> camera = camera;
+}
+
+void SceneRenderer::SetConstellations (Constellations* constellations)
+{
+    m_Constellations = constellations;
+    m_Constellations -> Start();
 }
 
 void SceneRenderer::UpdateBlockAtLocation(glm::vec3 pos, BlockType type)
