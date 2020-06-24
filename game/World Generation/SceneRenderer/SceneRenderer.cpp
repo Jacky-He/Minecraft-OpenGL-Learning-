@@ -41,7 +41,7 @@ void SceneRenderer::DeleteChunks()
 
 void SceneRenderer::UpdateConstellations()
 {
-    m_LightSources.push_back(m_Constellations -> Update());
+    m_LightSources.push_back(m_Constellations -> Update(camera -> GetDirection()));
 }
 
 void SceneRenderer::UpdateChunks()
@@ -152,6 +152,7 @@ void SceneRenderer::SetCamera(Camera* camera)
 void SceneRenderer::SetConstellations (Constellations* constellations)
 {
     m_Constellations = constellations;
+    Constellations::SetUp();
     m_Constellations -> Start();
 }
 
