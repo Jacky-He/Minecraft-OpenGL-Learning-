@@ -56,7 +56,7 @@ bool GLLogCall(const char* function, const char* file, int line)
 bool Util::isEmptyWhenRendering (BlockType type)
 {
     int idx = static_cast<int>(type);
-    return idx >= 100 || idx == -1;
+    return idx >= 100 || idx == -1 || idx == 5;
 }
 
 bool Util::isTwoTex (BlockType type)

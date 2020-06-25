@@ -39,9 +39,9 @@ bool GLLogCall(const char* function, const char* file, int line);
 
 enum class BlockType
 {
-    EMPTY = -1, GRASS = 0, DIRT = 1, OAKLEAF = 2, OAKLOG = 3, SAND = 4,
+    EMPTY = -1, GRASS = 0, DIRT = 1, OAKLEAF = 2, OAKLOG = 3, SAND = 4, BIRCHLEAF = 5, BIRCHLOG = 6,
     
-    TALLGRASS = 100, AZUREBLUET = 101, CORNFLOWER = 102, OXEYEDAISY = 103
+    TALLGRASS = 100, AZUREBLUET = 101, CORNFLOWER = 102, OXEYEDAISY = 103, LILYOFVALLEY = 104
 };
 
 enum class Direction

@@ -6,7 +6,7 @@ std::map <std::pair <std::pair <int, int>, int>, BlockType> Map::s_Lookup = std:
 int Map::s_CurrSeed = 1;
 Noise* Map::s_NoiseFunction = nullptr;
 
-Map::Map():m_HeightMapLimits(2000)
+Map::Map():m_HeightMapLimits(2000), m_InterHeightMapLimits(300)
 {
     if (s_NoiseFunction == nullptr) s_NoiseFunction = new Noise(s_CurrSeed);
 }
@@ -21,11 +21,40 @@ void Map::SetCurrSeed(int seed)
     s_CurrSeed = seed;
 }
 
+std::pair <BlockType, int> Map::GetVegetationAtLocation (int x, int y, int z)
+{
+    Biome biome = GetBiome(x, y, z);
+    switch (biome)
+    {
+        case Biome::PLAIN:
+        {
+            double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
+            if (vegyval < 0.20) return {BlockType::AZUREBLUET, 1};
+            if (vegyval < 0.29) return {BlockType::TALLGRASS, 1};
+            if (vegyval < 0.30) return {BlockType::CORNFLOWER, 1};
+            if (vegyval < 0.31) return {BlockType::OXEYEDAISY, 1};
+            break;
+        }
+        case Biome::FOREST:
+        {
+            double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
+            double treeextraheight = 4*(s_NoiseFunction -> GenNoise(222.38*x, 0, 84.72*z));
+            if (vegyval < 0.18) return {BlockType::OAKLOG, 3 + (int)round(treeextraheight)};
+            if (vegyval < 0.21) return {BlockType::BIRCHLOG, 3 + (int)round(treeextraheight)};
+            if (vegyval < 0.25) return {BlockType::LILYOFVALLEY, 1};
+            break;
+        }
+        default:
+            break;
+    }
+    return {BlockType::EMPTY, 0};
+}
+
 double Map::GetHeightAtLocation (int x, int y, int z)
 {
     if (m_HeightMap.find({x, z}) != m_HeightMap.end()) return m_HeightMap[{x, z}];
-    Biome biome = GetBiome(x, y, z);
     double res = 0;
+    Biome biome = GetBiome(x, y, z);
     switch (biome)
     {
         case Biome::PLAIN:
@@ -73,6 +102,8 @@ std::pair <int, int> Map::GetChunkPositionAt (glm::vec3 position)
 
 int Map::InterpolateHeightAtLocation (int x, int y, int z)
 {
+    if (m_InterHeightMap.find({x, z}) != m_InterHeightMap.end()) return m_InterHeightMap[{x, z}];
+    Biome biome = GetBiome(x, y, z);
     std::pair <int, int> p1 = GetChunkPositionAt(glm::vec3 (x, y, z));
     std::pair <int, int> p2 = {p1.first + 15, p1.second};
     std::pair <int, int> p3 = {p1.first + 15, p1.second + 15};
@@ -84,6 +115,13 @@ int Map::InterpolateHeightAtLocation (int x, int y, int z)
     double a1 = v1*(p2.first - x)/15.0 + v2*(x - p1.first)/15.0;
     double a2 = v4*(p3.first - x)/15.0 + v3*(x - p4.first)/15.0;
     double res = a1*(p3.second - z)/15.0 + a2*(z - p2.second)/15.0;
+    if (m_InterHeightMapOrder.size() >= m_InterHeightMapLimits)
+    {
+        m_InterHeightMap.erase(m_InterHeightMapOrder.front());
+        m_InterHeightMapOrder.pop_front();
+    }
+    m_InterHeightMap [{x, z}] = res;
+    m_InterHeightMapOrder.push_back({x, z});
     return res;
 }
 
@@ -126,41 +164,40 @@ BlockType Map::GENWater(int x, int y, int z, int height)
 
 BlockType Map::GENPlain(int x, int y, int z, int height)
 {
-    double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
-    if (y == height + 1)
-    {
-        if (vegyval < 0.20) return BlockType::AZUREBLUET;
-        if (vegyval < 0.29) return BlockType::TALLGRASS;
-        if (vegyval < 0.30) return BlockType::CORNFLOWER;
-        if (vegyval < 0.31) return BlockType::OXEYEDAISY;
-    }
+    std::pair <BlockType, int> vegyandheight = GetVegetationAtLocation(x, y, z);
+    if (y > height && y <= height + vegyandheight.second) return vegyandheight.first;
     if (y <= height) return BlockType::GRASS;
     return BlockType::EMPTY;
 }
 
 BlockType Map::GENForest(int x, int y, int z, int height)
 {
-    double vegyval = s_NoiseFunction -> GenNoise(202.2423*x, 0, 384.93*z);
-    double treeextraheight = 4*(s_NoiseFunction -> GenNoise(222.38*x, 0, 84.72*z));
-    if (vegyval < 0.20)
+    if (y > height + 10) return BlockType::EMPTY;
+    std::pair <BlockType, int> vegyandheight = GetVegetationAtLocation(x, y, z);
+    if (y > height && y <= height + vegyandheight.second) return vegyandheight.first;
+    if (y > height)
     {
+        //check surroundings for tree
         int radius = 2;
-        if (y >= height + 1 && y >= height + 1 && y <= height + 4 + int(treeextraheight)) return BlockType::OAKLOG;
-        s_Mutex.lock();
         for (int dx = -radius; dx <= radius; dx++)
         {
             for (int dz = -radius; dz <= radius; dz++)
             {
-                for (int dy = 0; dy <= radius; dy++)
+                std::pair <BlockType, int> veg = GetVegetationAtLocation(x + dx, 0, z + dz);
+                if (veg.first == BlockType::OAKLOG)
                 {
-                    if (abs(dx) + abs(dz) + abs(dy) <= radius)
-                    {
-                        SetBlockTypeAtLocation(x + dx, height + 3 + int(treeextraheight) + dy, z + dz, BlockType::OAKLEAF);
-                    }
+                    int height = (int)round(InterpolateHeightAtLocation(x + dx, 0, z + dz));
+                    int tip = height + veg.second;
+                    if (y >= tip && abs(dx) + abs(dz) + abs(y - tip) <= radius) return BlockType::OAKLEAF;
+                }
+                else if (veg.first == BlockType::BIRCHLOG)
+                {
+                    int height = (int)round(InterpolateHeightAtLocation(x + dx, 0, z + dz));
+                    int tip = height + veg.second;
+                    if (y >= tip && abs(dx) + abs(dz) + abs(y - tip) <= radius) return BlockType::BIRCHLEAF;
                 }
             }
         }
-        s_Mutex.unlock();
     }
     if (y <= height) return BlockType::GRASS;
     return BlockType::EMPTY;

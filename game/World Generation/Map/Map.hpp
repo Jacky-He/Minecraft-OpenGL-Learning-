@@ -17,6 +17,7 @@ public:
     
     Map();
     ~Map();
+    std::pair <BlockType, int> GetVegetationAtLocation (int x, int y, int z); //first blocktype, second height
     BlockType GetBlockTypeAtLocation(int x, int y, int z);
     double GetHeightAtLocation(int x, int y, int z);
     int InterpolateHeightAtLocation (int x, int y, int z);
@@ -27,6 +28,10 @@ public:
     std::map <std::pair <int, int>, double> m_HeightMap;
     std::deque <std::pair <int, int>> m_HeightMapOrder;
     int m_HeightMapLimits;
+    
+    std::map <std::pair <int, int>, double> m_InterHeightMap;
+    std::deque <std::pair <int, int>> m_InterHeightMapOrder;
+    int m_InterHeightMapLimits;
 
     BlockType GENWater(int x, int y, int z, int height);
     BlockType GENPlain(int x, int y, int z, int height);

@@ -71,7 +71,7 @@ int main ()
     SceneRenderer* renderer = new SceneRenderer(128);
     renderer -> SetCamera(player -> m_FirstPersonCamera);
     player -> SetSceneRenderer (renderer);
-    renderer -> SetConstellations (new Constellations(0.2));
+    renderer -> SetConstellations (new Constellations(20));
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
